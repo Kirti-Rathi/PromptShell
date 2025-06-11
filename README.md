@@ -33,6 +33,14 @@ https://github.com/user-attachments/assets/c2ba7d09-83ea-4d10-a825-92c30f28c0bd
 - [📜 License](#-license)
 - [📧 Contact](#-contact)
 
+### CLI Options
+
+#### `--version`
+
+The `--version` flag allows users to check the installed version of the package directly from the terminal.
+
+Current version: `PromptShell v0.1.1`
+
 ## ✨ Features
 
 ### 🚀 Redefine Your Terminal Experience
