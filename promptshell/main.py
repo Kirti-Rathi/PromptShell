@@ -7,6 +7,20 @@ from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
 
 def main():
+    """The main entry point for the AI-Powered Terminal Assistant.
+
+    This function initializes the assistant, loads the configuration, and starts the interactive loop
+    for processing user input. It handles commands, questions, and configuration updates.
+
+    Behavior:
+        - Loads configuration or runs a setup wizard if no configuration exists.
+        - Enables ANSI support and sets up readline for command-line enhancements.
+        - Processes user input for commands, questions, or special options like '--help' or '--config'.
+        - Provides a clean exit on 'quit' or 'Ctrl + c'.
+
+    Returns:
+        None
+    """
     config = load_config()
     if not config:
         print("First-time setup required!")

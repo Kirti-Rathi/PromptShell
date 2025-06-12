@@ -9,6 +9,14 @@ from typing import List, Tuple
 
 class Node:
     def __init__(self, model_name: str, name: str, max_tokens: int = 8192, config: dict = None):
+        """Initializes a Node instance for interacting with AI models.
+
+        Args:
+            model_name (str): The name of the AI model to use.
+            name (str): The name of the node.
+            max_tokens (int, optional): The maximum number of tokens for the model's response. Defaults to 8192.
+            config (dict, optional): Configuration settings for the node. Defaults to None.
+        """
         self.model_name = model_name
         self.name = name
         self.definition = ""
@@ -18,6 +26,15 @@ class Node:
         self.provider = get_provider()
 
     def __call__(self, input_text: str, additional_data: dict = None):
+        """Processes user input and generates a response using the configured AI provider.
+
+        Args:
+            input_text (str): The input text or query from the user.
+            additional_data (dict, optional): Additional context or data to include in the prompt. Defaults to None.
+
+        Returns:
+            str: The AI-generated response or an error message.
+        """
         try:
             context_str = "\n".join([f"{msg['role']} {msg['content']}" for msg in self.context])
             prompt = f""" system {self.definition} 
@@ -58,6 +75,14 @@ class Node:
             return f"Error in processing: {str(e)}"
 
     def _call_ollama(self, prompt: str) -> str:
+        """Handles API calls for the Ollama provider.
+
+        Args:
+            prompt (str): The prompt to send to the Ollama API.
+
+        Returns:
+            str: The response from the Ollama API or an error message.
+        """
         response = requests.post(
             'http://localhost:11434/api/generate',
             json={
@@ -77,6 +102,14 @@ class Node:
 
 
     def _call_openai(self, prompt: str) -> str:
+        """Handles API calls for the OpenAI provider.
+
+        Args:
+            prompt (str): The prompt to send to the OpenAI API.
+
+        Returns:
+            str: The response from the OpenAI API or an error message.
+        """
         api_key = self.config["OPENAI_API_KEY"]
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
@@ -86,6 +119,14 @@ class Node:
         return response.choices[0].message.content.strip()
 
     def _call_anthropic(self, prompt: str) -> str:
+        """Handles API calls for the Anthropic provider.
+
+        Args:
+            prompt (str): The prompt to send to the Anthropic API.
+
+        Returns:
+            str: The response from the Anthropic API or an error message.
+        """
         api_key = self.config["ANTHROPIC_API_KEY"]
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
@@ -96,6 +137,14 @@ class Node:
         return response.content[0].text.strip()
 
     def _call_google(self, prompt: str) -> str:
+        """Handles API calls for the Google Generative AI provider.
+
+        Args:
+            prompt (str): The prompt to send to the Google Generative AI API.
+
+        Returns:
+            str: The response from the Google Generative AI API or an error message.
+        """
         api_key = self.config["GOOGLE_API_KEY"]
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(self.model_name)
@@ -103,6 +152,14 @@ class Node:
         return response.text.strip()
 
     def _call_groq(self, prompt: str) -> str:
+        """Handles API calls for the Groq provider.
+
+        Args:
+            prompt (str): The prompt to send to the Groq API.
+
+        Returns:
+            str: The response from the Groq API or an error message.
+        """
         api_key = self.config["GROQ_API_KEY"]
         client = Groq(api_key=api_key)
         
@@ -129,7 +186,14 @@ class Node:
         return response_json["command"].strip()
     
     def _call_fireworks(self, prompt: str) -> str:
-        """Handle API calls for Fireworks AI provider"""
+        """Handles API calls for the Fireworks AI provider.
+
+        Args:
+            prompt (str): The prompt to send to the Fireworks API.
+
+        Returns:
+            str: The response from the Fireworks API or an error message.
+        """
         api_key = self.config["FIREWORKS_API_KEY"]
         client = OpenAI(
             api_key=api_key,
@@ -143,7 +207,14 @@ class Node:
         return response.choices[0].message.content.strip()
     
     def _call_openrouter(self, prompt: str) -> str:
-        """Handle API calls for OpenRouter provider"""
+        """Handles API calls for the OpenRouter provider.
+
+        Args:
+            prompt (str): The prompt to send to the OpenRouter API.
+
+        Returns:
+            str: The response from the OpenRouter API or an error message.
+        """
         api_key = self.config["OPENROUTER_API_KEY"]
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -161,7 +232,14 @@ class Node:
         return response.choices[0].message.content.strip()
     
     def _call_deepseek(self, prompt: str) -> str:
-        """Handle API calls for DeepSeek provider"""
+        """Handles API calls for the DeepSeek provider.
+
+        Args:
+            prompt (str): The prompt to send to the DeepSeek API.
+
+        Returns:
+            str: The response from the DeepSeek API or an error message.
+        """
         api_key = self.config["DEEPSEEK_API_KEY"]
         client = OpenAI(
             api_key=api_key,

@@ -3,6 +3,15 @@ import glob
 import os
 
 def setup_readline():
+    """Sets up readline for command-line input, enabling tab completion.
+
+    This function attempts to import the readline module for Unix-like systems. 
+    If the import fails, it tries to use pyreadline3 for Windows. If that also fails,
+    it attempts to use prompt_toolkit as an alternative for tab completion.
+
+    Returns:
+        callable: A function for completing paths if using prompt_toolkit, otherwise None.
+    """
     try:
         import readline  # Works on Unix-like systems
     except ImportError:
