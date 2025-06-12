@@ -13,6 +13,13 @@ from .system_info import get_system_info
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
+        """Initializes the AITerminalAssistant with the given model name and configuration.
+
+        Args:
+            model_name (str): The name of the model to use for command execution.
+            max_tokens (int, optional): The maximum number of tokens for the model. Defaults to 8000.
+            config (dict, optional): Additional configuration settings. Defaults to None.
+        """
         self.username = getpass.getuser()
         self.home_folder = os.path.expanduser("~")
         self.current_directory = os.getcwd()
@@ -28,6 +35,7 @@ class AITerminalAssistant:
         self.initialize_system_context()
 
     def initialize_system_context(self):
+        """Initializes the system context by gathering installed commands and system information."""
         path_dirs = os.environ.get('PATH', '').split(os.pathsep)
         installed_commands = []
         for dir in path_dirs:
@@ -105,7 +113,7 @@ class AITerminalAssistant:
         Solution: Confirm file existence with 'ls'
         Alternative: Use trash-cli instead of rm
         """
-        
+  
         self.debugger.definition = f"""
         [ROLE] Shell Environment Debugger
         [TASK] Diagnose complex system issues
@@ -154,6 +162,14 @@ class AITerminalAssistant:
         """
 
     def execute_command_with_live_output(self, command: str) -> Tuple[str, str, int]:
+        """Executes a shell command and captures its live output.
+
+        Args:
+            command (str): The shell command to execute.
+
+        Returns:
+            Tuple[str, str, int]: A tuple containing the standard output, standard error, and exit code.
+        """
         interactive_commands = [
             'vim', 'vi', 'nano', 'emacs', 'ssh', 'telnet', 'top', 'htop',
             'man', 'less', 'more', 'mysql', 'psql', 'nmtui', 'crontab',
@@ -183,6 +199,14 @@ class AITerminalAssistant:
             return "", str(e), 1
 
     def execute_interactive_command(self, command: str) -> Tuple[str, str, int]:
+        """Executes an interactive shell command.
+
+        Args:
+            command (str): The interactive shell command to execute.
+
+        Returns:
+            Tuple[str, str, int]: A tuple containing the standard output, standard error, and exit code.
+        """        
         print(format_text('yellow') + "Executing interactive command..." + reset_format())
         try:
             proc = subprocess.Popen(
@@ -201,6 +225,14 @@ class AITerminalAssistant:
             return "", str(e), 1
 
     def execute_command(self, user_input: str) -> str:
+        """Executes a command based on user input.
+
+        Args:
+            user_input (str): The command or question input by the user.
+
+        Returns:
+            str: The result of the command execution or an error message.
+        """
         try:
             self.current_directory = os.getcwd()
             if user_input.strip() == "":
@@ -260,6 +292,14 @@ class AITerminalAssistant:
             return self.handle_error(str(e), user_input, command)
 
     def run_direct_command(self, command: str) -> str:
+        """Executes a direct shell command provided by the user.
+
+        Args:
+            command (str): The shell command to execute.
+
+        Returns:
+            str: The result of the command execution or an error message.
+        """
         try:
             formatted_command = format_text('cyan') + f"Direct Command: {command}" + reset_format()
             print(formatted_command)
@@ -287,6 +327,14 @@ class AITerminalAssistant:
             return self.handle_error(str(e), command, command)
 
     def answer_question(self, question: str) -> str:
+        """Answers a user-provided question based on the current context.
+
+        Args:
+            question (str): The question to answer.
+
+        Returns:
+            str: The answer to the question.
+        """
         context = f"""
         Command History (last 10 commands):
         {', '.join(self.command_history)}
@@ -301,6 +349,14 @@ class AITerminalAssistant:
         return format_text('cyan') + "Answer:\n" + answer + reset_format()
 
     def gather_additional_data(self, user_input: str) -> dict:
+        """Gathers additional data based on the user's input, such as clipboard content or file data.
+
+        Args:
+            user_input (str): The user's input to analyze for additional data needs.
+
+        Returns:
+            dict: A dictionary containing additional data, such as clipboard content or file content.
+        """
         additional_data = {}
         if "clipboard" in user_input.lower():
             clipboard_content = self.data_gatherer.get_clipboard_content()
@@ -318,6 +374,16 @@ class AITerminalAssistant:
         return additional_data
 
     def debug_error(self, command: str, error_output: str, exit_code: int) -> str:
+        """Analyzes a failed command and provides debugging suggestions.
+
+        Args:
+            command (str): The command that failed.
+            error_output (str): The error output from the failed command.
+            exit_code (int): The exit code of the failed command.
+
+        Returns:
+            str: A debugging suggestion or alternative command.
+        """
         context = f"""
         Command History (last 10 commands):
         {', '.join(self.command_history)}
@@ -335,6 +401,16 @@ class AITerminalAssistant:
         return self.debugger(debug_input)
 
     def handle_error(self, error: str, user_input: str, command: str) -> str:
+        """Handles errors by analyzing the issue and suggesting a corrected command.
+
+        Args:
+            error (str): The error message.
+            user_input (str): The original user input.
+            command (str): The interpreted command that caused the error.
+
+        Returns:
+            str: The result of executing the suggested command or an error message.
+        """
         error_analysis = self.error_handler(f"""
         Error: {error}
         User Input: {user_input}

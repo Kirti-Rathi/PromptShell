@@ -2,6 +2,17 @@ import os
 import platform
 
 def format_text(fg, bg=None, inverted=False, bold=False):
+    """Formats text for terminal output with specified foreground and background colors.
+
+    Args:
+        fg (str): The foreground color (e.g., 'red', 'green').
+        bg (str, optional): The background color (e.g., 'black', 'white'). Defaults to None.
+        inverted (bool, optional): If True, inverts the foreground and background colors. Defaults to False.
+        bold (bool, optional): If True, makes the text bold. Defaults to False.
+
+    Returns:
+        str: The formatted text string with ANSI escape codes.
+    """
     reset = "\033[0m"
     result = reset
     if bold:
@@ -18,9 +29,19 @@ def format_text(fg, bg=None, inverted=False, bold=False):
     return result
 
 def reset_format():
+    """Resets the text formatting to default.
+
+    Returns:
+        str: The ANSI escape code to reset formatting.
+    """
     return "\033[0m"
 
 def get_terminal_size():
+    """Retrieves the current size of the terminal window.
+
+    Returns:
+        tuple: A tuple containing the number of columns and rows in the terminal.
+    """
     try:
         columns, rows = os.get_terminal_size(0)
     except OSError:
@@ -28,12 +49,20 @@ def get_terminal_size():
     return columns, rows
 
 def get_current_os():
-    """Detect and normalize current operating system"""
+    """Detects and normalizes the current operating system.
+
+    Returns:
+        str: The name of the current operating system ('windows', 'macos', or 'linux').
+    """
     system = platform.system().lower()
     return 'windows' if system == 'windows' else 'macos' if system == 'darwin' else 'linux'
 
 def get_os_specific_examples():
-    """Return OS-appropriate command examples"""
+    """Returns OS-appropriate command examples based on the current operating system.
+
+    Returns:
+        list: A list of command examples specific to the current OS.
+    """
     current_os = get_current_os()
     examples = {
         'windows': [

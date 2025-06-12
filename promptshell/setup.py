@@ -16,6 +16,15 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "promptshell_config.conf")
 warning_printed = False  # Global variable to track if the warning has been printed
 
 def setup_wizard():
+    """Runs the setup wizard to configure the PromptShell environment.
+
+    This function guides the user through selecting an operation mode (local or API),
+    choosing models, and entering API keys if necessary. It ensures the configuration
+    is saved to a file for future use.
+
+    Returns:
+        None
+    """
     # Load existing configuration
     config = load_config()
 
@@ -193,9 +202,12 @@ DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
     print(format_text("blue") + f"Active model: {get_active_model()}" + reset_format())
 
 def load_config():
-    """
-    Loads the configuration file into a dictionary.
-    Returns default values if the file is missing or incomplete.
+    """Loads the configuration file into a dictionary.
+
+    If the configuration file is missing or incomplete, default values are returned.
+
+    Returns:
+        dict: A dictionary containing the configuration settings.
     """
     global warning_printed  
 
@@ -248,6 +260,13 @@ def get_active_model():
         return config["API_MODEL"]
 
 def get_provider():
+    """Determines the active provider based on the current configuration.
+
+    If the mode is 'api', it returns the active API provider. Otherwise, it defaults to 'ollama'.
+
+    Returns:
+        str: The name of the active provider.
+    """
     config = load_config()
     if config["MODE"] == "api":
         return config["ACTIVE_API_PROVIDER"]
