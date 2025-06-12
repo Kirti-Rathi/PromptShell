@@ -32,7 +32,7 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
             if len(prompt) + len(user_input) > columns:
                 print()  # Move to the next line if input is too long
 
-            if user_input.lower() == 'quit':
+            if user_input.lower() in ['quit', 'exit']: # Allow both 'quit' and 'exit' commands to terminate the REPL session
                 print(format_text('red', bold=True) + "\nTerminating..." + reset_format())
                 break
 
