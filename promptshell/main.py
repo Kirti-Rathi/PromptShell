@@ -2,12 +2,18 @@ from .ai_terminal_assistant import AITerminalAssistant
 from .readline_setup import setup_readline
 import platform
 import os
+import sys
 from .ansi_support import enable_ansi_support
 from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
 from .alias_manager import handle_alias_command
 
 def main():
+    # Check for version flag
+    if len(sys.argv) > 1 and sys.argv[1] == "--version":
+        print("PromptShell v0.1.1")
+        return
+
     config = load_config()
     if not config:
         print("First-time setup required!")
