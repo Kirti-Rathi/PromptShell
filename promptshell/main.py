@@ -5,16 +5,8 @@ import os
 from .ansi_support import enable_ansi_support
 from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
-import importlib.metadata
-
-__version__ = importlib.metadata.version("promptshell")
 
 def main():
-    # Handle --version flag
-    if len(os.sys.argv) > 1 and os.sys.argv[1] == "--version":
-        print(f"PromptShell v{__version__}")
-        return
-
     config = load_config()
     if not config:
         print("First-time setup required!")
@@ -58,9 +50,7 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
 - Start or end your input with '?' to ask a question.
 - Tab completion for files and folders is enabled.
 - Use 'Ctrl + c' or type 'quit' to quit the assistant.
-- Type 'clear' to clear the terminal.
-- Use '--version' to check the installed version.
-- Type '--config' to configure settings.{reset_format()}""")
+- Type 'clear' to clear the terminal.{reset_format()}""")
                 continue
 
             result = assistant.execute_command(user_input)
