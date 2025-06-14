@@ -4,7 +4,7 @@ from openai import OpenAI
 import anthropic
 import google.generativeai as genai
 from groq import Groq
-from tqdm import tqdm
+from yaspin import yaspin
 from .setup import get_provider
 from typing import List, Tuple
 
@@ -31,7 +31,7 @@ class Node:
                 prompt += " "
             prompt += "\n assistant "
 
-            with tqdm(total=1, desc=f"{self.name} Processing", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+            with yaspin(text=f"{self.name} Processing", color="yellow") as spinner:
                 if self.provider == "ollama":
                     response = self._call_ollama(prompt)
                 elif self.provider == "openai":
@@ -50,7 +50,7 @@ class Node:
                     response = self._call_deepseek(prompt)
                 else:
                     return "Unsupported provider."
-                pbar.update(1)
+         
 
             output = response.strip()
             self.context.append({"role": "user", "content": input_text})
