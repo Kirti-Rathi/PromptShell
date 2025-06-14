@@ -4,6 +4,7 @@ from openai import OpenAI
 import anthropic
 import google.generativeai as genai
 from groq import Groq
+from tqdm import tqdm
 from .setup import get_provider
 from typing import List, Tuple
 
@@ -30,24 +31,26 @@ class Node:
                 prompt += " "
             prompt += "\n assistant "
 
-            if self.provider == "ollama":
-                response = self._call_ollama(prompt)
-            elif self.provider == "openai":
-                response = self._call_openai(prompt)
-            elif self.provider == "anthropic":
-                response = self._call_anthropic(prompt)
-            elif self.provider == "google":
-                response = self._call_google(prompt)
-            elif self.provider == "groq":
-                response = self._call_groq(prompt)
-            elif self.provider == "fireworks":
-                response = self._call_fireworks(prompt)
-            elif self.provider == "openrouter":
-                response = self._call_openrouter(prompt)
-            elif self.provider == "deepseek":
-                response = self._call_deepseek(prompt)
-            else:
-                return "Unsupported provider."
+            with tqdm(total=1, desc=f"{self.name} Processing", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+                if self.provider == "ollama":
+                    response = self._call_ollama(prompt)
+                elif self.provider == "openai":
+                    response = self._call_openai(prompt)
+                elif self.provider == "anthropic":
+                    response = self._call_anthropic(prompt)
+                elif self.provider == "google":
+                    response = self._call_google(prompt)
+                elif self.provider == "groq":
+                    response = self._call_groq(prompt)
+                elif self.provider == "fireworks":
+                    response = self._call_fireworks(prompt)
+                elif self.provider == "openrouter":
+                    response = self._call_openrouter(prompt)
+                elif self.provider == "deepseek":
+                    response = self._call_deepseek(prompt)
+                else:
+                    return "Unsupported provider."
+                pbar.update(1)
 
             output = response.strip()
             self.context.append({"role": "user", "content": input_text})
