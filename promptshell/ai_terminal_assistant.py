@@ -5,7 +5,6 @@ import getpass
 import sys
 import platform
 import questionary
-from tqdm import tqdm
 from typing import Tuple
 from .node import Node
 from .data_gatherer import DataGatherer
@@ -20,35 +19,31 @@ class AITerminalAssistant:
         self.current_directory = os.getcwd()
         self.config = config or {}
 
-        with tqdm(total=6, desc="Initializing Components", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
-            self.alias_manager = AliasManager()
-            pbar.update(1)
-            self.command_executor = Node(model_name, "Command Executor", max_tokens=max_tokens, config=self.config)
-            pbar.update(1)
-            self.error_handler = Node(model_name, "Error Handler", max_tokens=max_tokens, config=self.config)
-            pbar.update(1)
-            self.debugger = Node(model_name, "Debugger Expert", max_tokens=max_tokens, config=self.config)
-            pbar.update(1)
-            self.question_answerer = Node(model_name, "Question Answerer", max_tokens=max_tokens, config=self.config)
-            pbar.update(1)
-            self.data_gatherer = DataGatherer()
-            pbar.update(1)
-            self.command_history = []
+        self.alias_manager = AliasManager()
+        self.command_executor = Node(model_name, "Command Executor", max_tokens=max_tokens, config=self.config)
+        self.error_handler = Node(model_name, "Error Handler", max_tokens=max_tokens, config=self.config)
+        self.debugger = Node(model_name, "Debugger Expert", max_tokens=max_tokens, config=self.config)
+        self.question_answerer = Node(model_name, "Question Answerer", max_tokens=max_tokens, config=self.config)
+        self.data_gatherer = DataGatherer()
+        self.command_history = []
 
         self.initialize_system_context()
 
     def initialize_system_context(self):
-        with tqdm(total=2, desc="Gathering System Info", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
-            path_dirs = os.environ.get('PATH', '').split(os.pathsep)
-            installed_commands = []
-            for dir in path_dirs:
-                if os.path.isdir(dir):
-                    try:
-                        installed_commands.extend([f for f in os.listdir(dir) if os.access(os.path.join(dir, f), os.X_OK)])
-                    except PermissionError:
-                        continue
-            installed_commands = list(set(installed_commands))
-            pbar.update(1)
+        path_dirs = os.environ.get('PATH', '').split(os.pathsep)
+        installed_commands = []
+        for dir in path_dirs:
+            if os.path.isdir(dir):
+                try:
+                    installed_commands.extend([f for f in os.listdir(dir) if os.access(os.path.join(dir, f), os.X_OK)])
+                except PermissionError:
+                    continue
+        installed_commands = list(set(installed_commands))
+        
+        try:
+            system_info = get_system_info()
+        except Exception:
+            system_info = "Unable to retrieve system information"
             
             try:
                 system_info = get_system_info()
@@ -178,22 +173,19 @@ class AITerminalAssistant:
             return self.execute_interactive_command(command)
 
         try:
-            with tqdm(total=1, desc="Executing Command", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
-                if platform.system().lower() == "windows":
-                    result = subprocess.run(command, shell=True, text=True, capture_output=True)
-                    print(result.stdout)
-                    if result.stderr:
-                        print(format_text('red') + "Error: " + result.stderr + reset_format())
-                    pbar.update(1)
-                    return result.stdout, result.stderr, result.returncode
-                else:
-                    args = shlex.split(command)
-                    result = subprocess.run(args, text=True, capture_output=True)
-                    print(result.stdout)
-                    if result.stderr:
-                        print(format_text('red') + "Error: " + result.stderr + reset_format())
-                    pbar.update(1)
-                    return result.stdout, result.stderr, result.returncode
+            if platform.system().lower() == "windows":
+                result = subprocess.run(command, shell=True, text=True, capture_output=True)
+                print(result.stdout)
+                if result.stderr:
+                    print(format_text('red') + "Error: " + result.stderr + reset_format())
+                return result.stdout, result.stderr, result.returncode
+            else:
+                args = shlex.split(command)
+                result = subprocess.run(args, text=True, capture_output=True)
+                print(result.stdout)
+                if result.stderr:
+                    print(format_text('red') + "Error: " + result.stderr + reset_format())
+                return result.stdout, result.stderr, result.returncode
         except Exception as e:
             print(format_text('red') + f"Execution error: {e}" + reset_format())
             return "", str(e), 1
