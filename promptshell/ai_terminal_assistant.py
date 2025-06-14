@@ -11,6 +11,7 @@ from .node import Node
 from .data_gatherer import DataGatherer
 from .format_utils import format_text, reset_format, get_current_os, get_os_specific_examples
 from .system_info import get_system_info
+from .alias_manager import AliasManager
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
@@ -19,7 +20,9 @@ class AITerminalAssistant:
         self.current_directory = os.getcwd()
         self.config = config or {}
 
-        with tqdm(total=5, desc="Initializing Components", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+        with tqdm(total=6, desc="Initializing Components", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
+            self.alias_manager = AliasManager()
+            pbar.update(1)
             self.command_executor = Node(model_name, "Command Executor", max_tokens=max_tokens, config=self.config)
             pbar.update(1)
             self.error_handler = Node(model_name, "Error Handler", max_tokens=max_tokens, config=self.config)
