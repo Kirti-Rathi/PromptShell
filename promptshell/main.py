@@ -5,8 +5,29 @@ import os
 from .ansi_support import enable_ansi_support
 from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
+from pathlib import Path
+import argparse
+import toml
+
+# Function to get the version from pyproject.toml
+def get_version():
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"  # Adjust path if needed
+    pyproject_data = toml.load(pyproject_path)
+    return pyproject_data["project"]["version"]
 
 def main():
+    # Add argument parsing for CLI flags
+    parser = argparse.ArgumentParser(description="PromptShell CLI")
+    parser.add_argument("--version", action="store_true", help="Show the version of PromptShell")
+    args, unknown = parser.parse_known_args()  # Allow unknown args for the assistant
+
+    # Handle the --version flag
+    if args.version:
+        version = get_version()
+        print(f"PromptShell v{version}")
+        return
+
+    # Load configuration
     config = load_config()
     if not config:
         print("First-time setup required!")
