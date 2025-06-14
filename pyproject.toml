@@ -26,7 +26,7 @@ dependencies = [
     "pyperclip",
     "pyreadline3",
     "questionary",
-    "tqdm>=4.66.0"
+    "yaspin>=2.3.0"
 ]
 
 [project.scripts]
