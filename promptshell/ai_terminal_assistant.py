@@ -5,11 +5,13 @@ import getpass
 import sys
 import platform
 import questionary
-from typing import Tuple
+from typing import Tuple, Dict, Any, Optional
 from .node import Node
 from .data_gatherer import DataGatherer
 from .format_utils import format_text, reset_format, get_current_os, get_os_specific_examples
 from .system_info import get_system_info
+from .database import get_database_provider, CloudDatabase
+import datetime
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
@@ -24,8 +26,32 @@ class AITerminalAssistant:
         self.question_answerer = Node(model_name, "Question Answerer", max_tokens=max_tokens, config=self.config)
         self.data_gatherer = DataGatherer()
         self.command_history = []
+        self.database = None
 
         self.initialize_system_context()
+        self.initialize_database()
+
+    def initialize_database(self):
+        """Initialize cloud database connection if configured"""
+        if self.config.get("DB_PROVIDER"):
+            self.database = get_database_provider(self.config["DB_PROVIDER"], self.config)
+            if self.database and self.database.connect():
+                print(format_text("green") + f"✅ Connected to {self.config['DB_PROVIDER']} database" + reset_format())
+            else:
+                print(format_text("yellow") + f"⚠️ Failed to connect to {self.config['DB_PROVIDER']} database" + reset_format())
+                self.database = None
+
+    def save_to_database(self, data: Dict[str, Any]) -> bool:
+        """Save data to the configured cloud database"""
+        if not self.database:
+            return False
+        return self.database.save_data(data)
+
+    def load_from_database(self, query: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Load data from the configured cloud database"""
+        if not self.database:
+            return None
+        return self.database.load_data(query)
 
     def initialize_system_context(self):
         path_dirs = os.environ.get('PATH', '').split(os.pathsep)
@@ -202,6 +228,16 @@ class AITerminalAssistant:
 
     def execute_command(self, user_input: str) -> str:
         try:
+            # Save command to database if configured
+            if self.database:
+                command_data = {
+                    "command": user_input,
+                    "timestamp": str(datetime.datetime.now()),
+                    "user": self.username,
+                    "directory": self.current_directory
+                }
+                self.save_to_database(command_data)
+
             self.current_directory = os.getcwd()
             if user_input.strip() == "":
                 return "Please provide a valid input."
@@ -228,7 +264,16 @@ class AITerminalAssistant:
             Use the actual filenames and content provided in the additional data.
             """, additional_data=additional_data).strip()
 
-            choice = questionary.confirm(f"Do you want to run the command '{command}'?").ask()
+            # Check if command needs confirmation
+            if any(destructive in command.lower() for destructive in ['rm -rf', 'format', 'dd if=']):
+                command = f"CONFIRM:{command}"
+
+            # Ask for confirmation
+            choice = questionary.confirm(
+                f"Execute command: {command}",
+                default=False
+            ).ask()
+
             if choice:
                 if command.startswith("CONFIRM:"):
                     confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[8:]}'?").ask()
@@ -350,3 +395,8 @@ class AITerminalAssistant:
         if confirmation:
             return self.execute_command(error_analysis)
         return format_text('red') + "Command execution aborted." + reset_format()
+
+    def __del__(self):
+        """Cleanup database connection when the assistant is destroyed"""
+        if self.database:
+            self.database.disconnect()

@@ -8,3 +8,7 @@ groq
 pyperclip
 pyreadline3
 questionary
+boto3>=1.34.0
+google-cloud-firestore>=2.13.0
+azure-cosmos>=4.5.0
+pymongo>=4.6.0

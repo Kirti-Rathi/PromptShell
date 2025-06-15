@@ -154,6 +154,72 @@ def setup_wizard():
                 print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
                 return
 
+    # Database Configuration
+    use_database = questionary.confirm(
+        "Would you like to configure cloud database integration?"
+    ).ask()
+    
+    if use_database:
+        database_provider = questionary.select(
+            "Select cloud database provider:",
+            choices=[
+                "AWS DynamoDB",
+                "Google Cloud Firestore",
+                "Azure Cosmos DB",
+                "MongoDB Atlas"
+            ]
+        ).ask()
+        
+        if database_provider:
+            if database_provider == "AWS DynamoDB":
+                config["DB_PROVIDER"] = "aws"
+                config["AWS_REGION"] = questionary.text(
+                    "Enter AWS region:",
+                    default="us-east-1"
+                ).ask()
+                config["AWS_TABLE_NAME"] = questionary.text(
+                    "Enter DynamoDB table name:",
+                    default="promptshell_data"
+                ).ask()
+                
+            elif database_provider == "Google Cloud Firestore":
+                config["DB_PROVIDER"] = "google"
+                config["GOOGLE_COLLECTION_NAME"] = questionary.text(
+                    "Enter Firestore collection name:",
+                    default="promptshell_data"
+                ).ask()
+                
+            elif database_provider == "Azure Cosmos DB":
+                config["DB_PROVIDER"] = "azure"
+                config["AZURE_ENDPOINT"] = questionary.text(
+                    "Enter Azure Cosmos DB endpoint:"
+                ).ask()
+                config["AZURE_KEY"] = questionary.password(
+                    "Enter Azure Cosmos DB key:"
+                ).ask()
+                config["AZURE_DATABASE_NAME"] = questionary.text(
+                    "Enter database name:",
+                    default="promptshell"
+                ).ask()
+                config["AZURE_CONTAINER_NAME"] = questionary.text(
+                    "Enter container name:",
+                    default="data"
+                ).ask()
+                
+            elif database_provider == "MongoDB Atlas":
+                config["DB_PROVIDER"] = "mongodb"
+                config["MONGODB_CONNECTION_STRING"] = questionary.password(
+                    "Enter MongoDB connection string:"
+                ).ask()
+                config["MONGODB_DATABASE_NAME"] = questionary.text(
+                    "Enter database name:",
+                    default="promptshell"
+                ).ask()
+                config["MONGODB_COLLECTION_NAME"] = questionary.text(
+                    "Enter collection name:",
+                    default="data"
+                ).ask()
+
     # Merge new configuration with existing configuration
     config["MODE"] = operation_mode
     config["OLLAMA_HOST"] = ollama_host
@@ -184,6 +250,18 @@ ANTHROPIC_API_KEY={config.get("ANTHROPIC_API_KEY", "")}
 FIREWORKS_API_KEY={config.get("FIREWORKS_API_KEY", "")}
 OPENROUTER_API_KEY={config.get("OPENROUTER_API_KEY", "")}
 DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
+# Database Configuration
+DB_PROVIDER={config.get("DB_PROVIDER", "")}
+AWS_REGION={config.get("AWS_REGION", "")}
+AWS_TABLE_NAME={config.get("AWS_TABLE_NAME", "")}
+GOOGLE_COLLECTION_NAME={config.get("GOOGLE_COLLECTION_NAME", "")}
+AZURE_ENDPOINT={config.get("AZURE_ENDPOINT", "")}
+AZURE_KEY={config.get("AZURE_KEY", "")}
+AZURE_DATABASE_NAME={config.get("AZURE_DATABASE_NAME", "")}
+AZURE_CONTAINER_NAME={config.get("AZURE_CONTAINER_NAME", "")}
+MONGODB_CONNECTION_STRING={config.get("MONGODB_CONNECTION_STRING", "")}
+MONGODB_DATABASE_NAME={config.get("MONGODB_DATABASE_NAME", "")}
+MONGODB_COLLECTION_NAME={config.get("MONGODB_COLLECTION_NAME", "")}
 """
 
     with open(CONFIG_FILE, "w") as file:
@@ -212,6 +290,17 @@ def load_config():
         "FIREWORKS_API_KEY": "",
         "OPENROUTER_API_KEY": "",
         "DEEPSEEK_API_KEY": "",
+        "DB_PROVIDER": "",
+        "AWS_REGION": "",
+        "AWS_TABLE_NAME": "",
+        "GOOGLE_COLLECTION_NAME": "",
+        "AZURE_ENDPOINT": "",
+        "AZURE_KEY": "",
+        "AZURE_DATABASE_NAME": "",
+        "AZURE_CONTAINER_NAME": "",
+        "MONGODB_CONNECTION_STRING": "",
+        "MONGODB_DATABASE_NAME": "",
+        "MONGODB_COLLECTION_NAME": ""
     }
 
     if not os.path.exists(CONFIG_FILE):
