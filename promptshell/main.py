@@ -5,6 +5,7 @@ import os
 from .ansi_support import enable_ansi_support
 from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
+from .alias_manager import handle_alias_command
 
 def main():
     config = load_config()
@@ -32,7 +33,7 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
             if len(prompt) + len(user_input) > columns:
                 print()  # Move to the next line if input is too long
 
-            if user_input.lower() == 'quit':
+            if user_input.lower() in  ('quit', 'exit'):
                 print(format_text('red', bold=True) + "\nTerminating..." + reset_format())
                 break
 
@@ -49,8 +50,13 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
 - Start your input with '!' to execute a command directly without processing.
 - Start or end your input with '?' to ask a question.
 - Tab completion for files and folders is enabled.
-- Use 'Ctrl + c' or type 'quit' to quit the assistant.
+-Use 'Ctrl + c' or type 'quit' or 'exit' to quit and exit the assistant.
 - Type 'clear' to clear the terminal.{reset_format()}""")
+                continue
+
+            if user_input.lower().startswith("alias "):
+                result = handle_alias_command(user_input, assistant.alias_manager)
+                print(result)
                 continue
 
             result = assistant.execute_command(user_input)
