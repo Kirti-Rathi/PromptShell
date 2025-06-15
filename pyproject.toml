@@ -25,7 +25,8 @@ dependencies = [
     "groq",
     "pyperclip",
     "pyreadline3",
-    "questionary"
+    "questionary",
+    "rich"
 ]
 
 [project.scripts]

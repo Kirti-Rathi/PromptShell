@@ -5,6 +5,7 @@ import os
 from .ansi_support import enable_ansi_support
 from .format_utils import format_text, reset_format, get_terminal_size
 from .setup import setup_wizard, load_config, get_active_model
+from .alias_manager import handle_alias_command
 
 def main():
     config = load_config()
@@ -53,24 +54,32 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
 - Type 'clear' to clear the terminal.{reset_format()}""")
                 continue
 
-            # ✅ Check for destructive command
-            if user_input.startswith("CONFIRM:"):
-                actual_command = user_input.replace("CONFIRM:", "", 1).strip()
+        continue
 
-                # Step 1: Initial yes/no confirmation
-                proceed = input(format_text('yellow', bold=True) + f"\n⚠️  This is a destructive command.\nDo you want to continue? (yes/no): " + reset_format())
-                if proceed.strip().lower() != "yes":
-                    print(format_text('red', bold=True) + "\nCommand aborted by user." + reset_format())
-                    continue
+        # ✅ Check for destructive command
+        if user_input.startswith("CONFIRM:"):
+            actual_command = user_input.replace("CONFIRM:", "", 1).strip()
 
-                # Step 2: Manual re-entry for safety
-                confirm_input = input(format_text('yellow', bold=True) + f"Type the exact command to proceed:\n> " + reset_format())
-                if confirm_input.strip() != actual_command:
-                    print(format_text('red', bold=True) + "\n❌ Mismatch. Aborting execution!" + reset_format())
-                    continue
+            # Step 1: Initial yes/no confirmation
+            proceed = input(format_text('yellow', bold=True) + f"\n⚠️  This is a destructive command.\nDo you want to continue? (yes/no): " + reset_format())
+            if proceed.strip().lower() != "yes":
+                print(format_text('red', bold=True) + "\nCommand aborted by user." + reset_format())
+                continue
 
-                # If matched, allow execution
-                user_input = actual_command
+            # Step 2: Manual re-entry for safety
+            confirm_input = input(format_text('yellow', bold=True) + f"Type the exact command to proceed:\n> " + reset_format())
+            if confirm_input.strip() != actual_command:
+                print(format_text('red', bold=True) + "\n❌ Mismatch. Aborting execution!" + reset_format())
+                continue
+
+            # If matched, allow execution
+            user_input = actual_command
+
+        # ✅ Handle alias command
+        if user_input.lower().startswith("alias "):
+            result = handle_alias_command(user_input, assistant.alias_manager)
+            print(result)
+            continue
 
             result = assistant.execute_command(user_input)
             print(result)

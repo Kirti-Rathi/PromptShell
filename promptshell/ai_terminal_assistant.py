@@ -10,6 +10,7 @@ from .node import Node
 from .data_gatherer import DataGatherer
 from .format_utils import format_text, reset_format, get_current_os, get_os_specific_examples
 from .system_info import get_system_info
+from .alias_manager import AliasManager
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
@@ -17,7 +18,7 @@ class AITerminalAssistant:
         self.home_folder = os.path.expanduser("~")
         self.current_directory = os.getcwd()
         self.config = config or {}
-
+        self.alias_manager = AliasManager()
         self.command_executor = Node(model_name, "Command Executor", max_tokens=max_tokens, config=self.config)
         self.error_handler = Node(model_name, "Error Handler", max_tokens=max_tokens, config=self.config)
         self.debugger = Node(model_name, "Debugger Expert", max_tokens=max_tokens, config=self.config)
@@ -106,7 +107,7 @@ class AITerminalAssistant:
         Alternative: Use trash-cli instead of rm
         """
         
-        self.debugger.definition = f"""
+        self.debugger.definition = """
         [ROLE] Shell Environment Debugger
         [TASK] Diagnose complex system issues
         
@@ -214,7 +215,10 @@ class AITerminalAssistant:
                     os.system('clear')
                 return ""
             if user_input.startswith('!'):
-                return self.run_direct_command(user_input[1:])
+                expanded = self.alias_manager.expand_alias(user_input[1:])
+                if expanded != user_input[1:]:
+                    print(f"Expanded to: {expanded}")
+                return self.run_direct_command(expanded)
             additional_data = self.gather_additional_data(user_input)
             command = self.command_executor(f"""
             User Input: {user_input}
@@ -246,7 +250,7 @@ class AITerminalAssistant:
                     result = f"Changed directory to {os.getcwd()}"
                     exit_code = 0
                 else:
-                    stdout, stderr, exit_code = self.execute_command_with_live_output(command)
+                    _, stderr, exit_code = self.execute_command_with_live_output(command)
                     result = ""
                     if exit_code != 0:
                         debug_suggestion = self.debug_error(command, stderr, exit_code)
@@ -277,7 +281,7 @@ class AITerminalAssistant:
                     os.system('clear')
                 return ""
             else:
-                stdout, stderr, exit_code = self.execute_command_with_live_output(command)
+                _, stderr, exit_code = self.execute_command_with_live_output(command)
                 result = ""
                 if exit_code != 0:
                     debug_suggestion = self.debug_error(command, stderr, exit_code)

@@ -41,9 +41,11 @@ https://github.com/user-attachments/assets/c2ba7d09-83ea-4d10-a825-92c30f28c0bd
 
 - 🔍**Smart Autocompletion**: Provides tab completions for files and folder present in working directory.
 
-- 🤖 **Direct Execution & Queries**: Directly execute shell commands with '!' (e.g., !ls -la), or Ask shell-related questions using '?' (e.g., How do I create a new SSH key?).
+- 🤖**Direct Execution & Queries**: Directly execute shell commands with '!' (e.g., !ls -la), or Ask shell-related questions using '?' (e.g., How do I create a new SSH key?).
 
-- 🐳 **Built-in Support for Git, Docker, and Dev Tools**: Seamlessly understands and executes Git, Docker, Kubernetes, and package manager commands.
+- 🐳**Built-in Support for Git, Docker, and Dev Tools**: Seamlessly understands and executes Git, Docker, Kubernetes, and package manager commands.
+
+- 🏷️**User Defined Aliases**: The alias system allows you to create, remove, list, import and export shortcuts for complex commands.
 
 ---
 
@@ -177,6 +179,31 @@ $ clear
 
 # Exit PromptShell
 $ quit
+```
+
+### Alias Support
+
+Create shortcuts for frequently used commands:
+
+```bash
+# Create an alias
+alias add gpm "git push origin main"
+
+# Use the alias
+!gpm
+
+# List all aliases
+alias list
+
+# List a specified alias
+alias list <alias_name>
+
+# Remove an alias
+alias remove gpm
+
+# Import/export aliases
+alias import ~/backup/aliases.json
+alias export ~/backup/aliases.json
 ```
 
 ---
