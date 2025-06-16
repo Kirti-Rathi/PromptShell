@@ -235,10 +235,23 @@ class AITerminalAssistant:
             choice = questionary.confirm(f"Do you want to run the command '{command}'?").ask()
             if choice:
                 if command.startswith("CONFIRM:"):
-                    confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[8:]}'?").ask()
+                    dangerous_command = command[8:].strip()
+                    
+                    confirmation = questionary.confirm(
+                        f"Warning: This command may be destructive. Are you sure you want to run '{dangerous_command}'?"
+                    ).ask()
+
                     if not confirmation:
                         return format_text('red') + "Command execution aborted." + reset_format()
-                    command = command[8:]
+                    
+                    # New safeguard: ask user to retype command
+                    manual_input = questionary.text(
+                        "Please manually type or paste the command to confirm:").ask()
+
+                    if manual_input.strip() != dangerous_command:
+                        return format_text('red') + "Command mismatch. Execution aborted." + reset_format()
+                    
+                    command = dangerous_command
                 formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
                 print(formatted_command)
                 self.command_history.append(command)
