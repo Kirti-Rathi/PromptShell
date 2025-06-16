@@ -5,6 +5,7 @@ import getpass
 import sys
 import platform
 import questionary
+import re
 from typing import Tuple
 from .node import Node
 from .data_gatherer import DataGatherer
@@ -205,49 +206,45 @@ class AITerminalAssistant:
 
     def execute_command(self, user_input: str) -> str:
         try:
-            command = None  # Initialize command variable
+            command = None
             self.current_directory = os.getcwd()
             
-            # Basic input validation
             if user_input.strip() == "":
                 return "Please provide a valid input."
-                
+
+            # Handle special commands (?, clear, !)
             if user_input.startswith('?') or user_input.endswith('?'):
                 return self.answer_question(user_input)
-            if user_input.lower().strip() == 'clear' or user_input.lower().strip() == 'cls':
-                if get_current_os() == 'windows':
-                    os.system('cls')
-                else:
-                    os.system('clear')
+            if user_input.lower().strip() in ['clear', 'cls']:
+                os.system('cls' if get_current_os() == 'windows' else 'clear')
                 return ""
             if user_input.startswith('!'):
                 return self.run_direct_command(user_input[1:])
-            additional_data = self.gather_additional_data(user_input)
+
+            # Get command from executor
             command = self.command_executor(f"""
             User Input: {user_input}
             Current OS: {platform.system()}
             Current Directory: {self.current_directory}
             Translate the user input into a SINGLE shell command.
             Return ONLY the command, nothing else.
-            """, additional_data=additional_data).strip()
+            """, additional_data=self.gather_additional_data(user_input)).strip()
 
-            # Handle dangerous commands with two-step verification
+            # Two-step verification for dangerous commands
             if self.is_dangerous_command(command):
-                # First confirmation
-                proceed = input(format_text('yellow', bold=True) + 
-                    f"\n⚠️  Warning: This is a destructive command.\nDo you want to continue? (yes/no): " + 
+                print(format_text('yellow', bold=True) + 
+                    f"\n⚠️  Warning: The command '{command}' may be destructive." + 
                     reset_format())
-                if proceed.strip().lower() != "yes":
+                
+                # First confirmation
+                if not questionary.confirm("Do you want to proceed?").ask():
                     return format_text('red', bold=True) + "\nCommand aborted by user." + reset_format()
 
                 # Second confirmation - manual reentry
-                confirm_input = input(format_text('yellow', bold=True) + 
-                    f"For safety, please re-type the exact command to proceed:\n> " + 
-                    reset_format())
+                confirm_input = questionary.text("For safety, please re-type the exact command:").ask()
                 if confirm_input.strip() != command.strip():
                     return format_text('red', bold=True) + "\n❌ Command mismatch. Operation aborted!" + reset_format()
 
-            # Execute the validated command
             return self._execute_validated_command(command)
 
         except Exception as e:
@@ -364,14 +361,21 @@ class AITerminalAssistant:
         return self.debugger(debug_input)
 
     def is_dangerous_command(self, command: str) -> bool:
-        dangerous_keywords = [
-            "rm ", "rmdir ", "del ", "delete ",  # File deletion
-            "chmod ", "chown ", "attrib ",       # Permission changes
-            "mkfs.", "format ",                  # Formatting
-            "dd ",                               # Direct disk operations
-            "mv ", "move ",                      # Moving files
-            "> ",                                # Output redirection that might overwrite
-            "reboot", "shutdown",                # System commands
-            "init 0", "init 6"                   # System state changes
+        dangerous_patterns = [
+            (r"(?:^|\s)(rm|del|delete)\s+-[rf]*\s+", "Recursive/forced deletion"),
+            (r"(?:^|\s)(rm|del|delete)\s+.*[\*\?]", "Wildcard deletion"),
+            (r"(?:^|\s)(chmod|chown)\s+-R\s+", "Recursive permission change"),
+            (r"(?:^|\s)(dd|format|mkfs)\s+", "Disk operations"),
+            (r"(?:^|\s)(shutdown|reboot|init\s+[06])\s*", "System control"),
+            (r"(?:^|\s)>(>?)\s+", "Output redirection"),
         ]
-        return any(command.strip().lower().startswith(kw.lower()) for kw in dangerous_keywords)
+        
+        cmd_lower = command.lower().strip()
+        return any(
+            cmd_lower.startswith(kw) for kw in [
+                "rm ", "del ", "delete ", "chmod ", "chown ",
+                "mkfs.", "dd ", "reboot", "shutdown", "init 0", "init 6"
+            ]
+        ) or any(
+            bool(re.search(pattern, cmd_lower)) for pattern, _ in dangerous_patterns
+        )
