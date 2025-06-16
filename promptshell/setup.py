@@ -16,6 +16,13 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "promptshell_config.conf")
 warning_printed = False  # Global variable to track if the warning has been printed
 
 def setup_wizard():
+    """
+    Interactive setup wizard to configure PromptShell settings.
+
+    Guides the user through selecting operation mode (local or API),
+    choosing a model, setting up API providers and keys, and saving
+    the configuration to a file.
+    """
     # Load existing configuration
     config = load_config()
 
@@ -49,7 +56,12 @@ def setup_wizard():
     }
 
     def get_installed_models():
-        """Fetch installed models from local Ollama server"""
+        """
+        Fetches installed models from the local Ollama server.
+
+        Returns:
+            list: A list of model names retrieved from the server.
+        """
         try:
             response = requests.get(f"{ollama_host}/api/tags")
             response.raise_for_status()
@@ -195,7 +207,10 @@ DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
 def load_config():
     """
     Loads the configuration file into a dictionary.
-    Returns default values if the file is missing or incomplete.
+
+    Returns:
+        dict: Dictionary containing configuration keys and values.
+              Defaults are returned if the file doesn't exist.
     """
     global warning_printed  
 
@@ -237,8 +252,10 @@ def load_config():
 
 def get_active_model():
     """
-    Returns the active model name based on the operation mode.
-    Uses 'LOCAL_MODEL' if in local mode, otherwise 'API_MODEL'.
+    Returns the name of the currently active model based on the config.
+
+    Returns:
+        str: Name of the local or API model in use.
     """
     config = load_config()
 
@@ -248,6 +265,12 @@ def get_active_model():
         return config["API_MODEL"]
 
 def get_provider():
+    """
+    Returns the current provider in use.
+
+    Returns:
+        str: "ollama" for local mode, or the API provider name.
+    """
     config = load_config()
     if config["MODE"] == "api":
         return config["ACTIVE_API_PROVIDER"]
