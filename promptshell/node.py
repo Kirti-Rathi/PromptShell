@@ -6,10 +6,34 @@ import google.generativeai as genai
 from groq import Groq
 from .setup import get_provider
 from typing import List, Tuple
-from .spinner_progress_utils import spinner, progress_bar
 
 class Node:
+    """
+    A class representing a generic AI model node that dynamically routes 
+    prompts to different AI providers based on configuration.
+
+    Supports providers: OpenAI, Anthropic, Google, Groq, Ollama, Fireworks, OpenRouter, DeepSeek.
+
+    Attributes:
+        model_name (str): The name of the model to use.
+        name (str): Identifier for this node.
+        max_tokens (int): Maximum number of tokens for the model's response.
+        config (dict): Configuration including API keys.
+        provider (str): Provider name derived from setup.
+        definition (str): System message definition string.
+        context (list): Running history of conversation turns.
+    """
+    
     def __init__(self, model_name: str, name: str, max_tokens: int = 8192, config: dict = None):
+        """
+        Initialize the Node with a model, name, max token limit, and configuration.
+
+        Args:
+            model_name (str): The model name (e.g., 'gpt-4').
+            name (str): Node identifier.
+            max_tokens (int): Max token length for output generation.
+            config (dict): Optional config dictionary for API keys.
+        """
         self.model_name = model_name
         self.name = name
         self.definition = ""
@@ -19,11 +43,21 @@ class Node:
         self.provider = get_provider()
 
     def __call__(self, input_text: str, additional_data: dict = None):
+        """
+        Generates a model response using the current provider and updates context.
+
+        Args:
+            input_text (str): User input text.
+            additional_data (dict): Optional extra information to provide to the model.
+
+        Returns:
+            str: The model's generated response.
+        """
         try:
             context_str = "\n".join([f"{msg['role']} {msg['content']}" for msg in self.context])
             prompt = f""" system {self.definition} 
 {context_str}
-user {input_text} """
+ user {input_text} """
             if additional_data:
                 prompt += "\n system Additional data:\n"
                 for key, value in additional_data.items():
@@ -58,8 +92,16 @@ user {input_text} """
         except Exception as e:
             return f"Error in processing: {str(e)}"
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_ollama(self, prompt: str) -> str:
+        """
+        Sends the prompt to the Ollama local API server and returns the model output.
+
+        Args:
+            prompt (str): Input prompt to the model.
+
+        Returns:
+            str: Model's response text or error message.
+        """
         response = requests.post(
             'http://localhost:11434/api/generate',
             json={
@@ -77,8 +119,16 @@ user {input_text} """
         else:
             return f"Error in Ollama API call: {response.status_code} - {response.text}"
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_openai(self, prompt: str) -> str:
+        """
+        Sends the prompt to OpenAI's API and returns the model output.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Response from OpenAI model.
+        """
         api_key = self.config["OPENAI_API_KEY"]
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
@@ -87,8 +137,16 @@ user {input_text} """
         )
         return response.choices[0].message.content.strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_anthropic(self, prompt: str) -> str:
+        """
+        Sends the prompt to Anthropic's Claude model and returns the output.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Response from Claude.
+        """
         api_key = self.config["ANTHROPIC_API_KEY"]
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
@@ -98,19 +156,35 @@ user {input_text} """
         )
         return response.content[0].text.strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_google(self, prompt: str) -> str:
+        """
+        Sends the prompt to Google's Generative AI and returns the response.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Output from the model.
+        """
         api_key = self.config["GOOGLE_API_KEY"]
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(self.model_name)
         response = model.generate_content(prompt)
         return response.text.strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_groq(self, prompt: str) -> str:
+        """
+        Sends a JSON-specific prompt to the Groq API and parses the JSON response.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Extracted 'command' from JSON response.
+        """
         api_key = self.config["GROQ_API_KEY"]
         client = Groq(api_key=api_key)
-        
+
         messages = [
             {
                 "role": "system",
@@ -121,21 +195,27 @@ user {input_text} """
                 "content": f"{prompt}. Return ONLY a JSON object with a 'command' key."
             }
         ]
-        
+
         response = client.chat.completions.create(
             model=self.model_name,
             messages=messages,
             max_tokens=self.max_tokens,
             response_format={"type": "json_object"},
         )
-        
-        # Extract and parse the JSON response
+
         response_json = json.loads(response.choices[0].message.content.strip())
         return response_json["command"].strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_fireworks(self, prompt: str) -> str:
-        """Handle API calls for Fireworks AI provider"""
+        """
+        Sends the prompt to Fireworks AI provider and returns the result.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Response from Fireworks model.
+        """
         api_key = self.config["FIREWORKS_API_KEY"]
         client = OpenAI(
             api_key=api_key,
@@ -148,9 +228,16 @@ user {input_text} """
         )
         return response.choices[0].message.content.strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_openrouter(self, prompt: str) -> str:
-        """Handle API calls for OpenRouter provider"""
+        """
+        Sends the prompt to OpenRouter provider with custom headers.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Output from OpenRouter model.
+        """
         api_key = self.config["OPENROUTER_API_KEY"]
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -167,9 +254,16 @@ user {input_text} """
         )
         return response.choices[0].message.content.strip()
 
-    @spinner(spinner_type="random", message=" [magenta]Waiting for API response...")
     def _call_deepseek(self, prompt: str) -> str:
-        """Handle API calls for DeepSeek provider"""
+        """
+        Sends the prompt to DeepSeek API and returns the response.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            str: Response text from DeepSeek.
+        """
         api_key = self.config["DEEPSEEK_API_KEY"]
         client = OpenAI(
             api_key=api_key,
@@ -179,7 +273,6 @@ user {input_text} """
             model=self.model_name,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=self.max_tokens,
-            temperature=0.3  # Recommended default for DeepSeek
+            temperature=0.3
         )
         return response.choices[0].message.content.strip()
-
