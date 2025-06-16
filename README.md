@@ -1,7 +1,7 @@
 <h1 align="center" style="font-size: 32px;">
   >_ PromptShell
   <sup>
-    <span style="font-size: 14px; color: #666;">v0.1.1</span>
+    <span style="font-size: 14px; color: #666;">v{version}</span>
   </sup>
 </h1>
 
@@ -166,7 +166,7 @@ $ backup all .txt files in a folder named backup
 $ !mkdir backup && copy *.txt backup\
 
 # Ask questions by prefixing or suffixing your query with '?'
-$ What’s the command to list all hidden files?
+$ What's the command to list all hidden files?
 
 # Configure or change the LLM provider
 $ --config
@@ -174,12 +174,21 @@ $ --config
 # View help and usage instructions
 $ --help
 
+# Check installed version
+$ --version
+
 # Clear the terminal screen
 $ clear
 
 # Exit PromptShell
 $ quit
 ```
+
+### CLI Options
+
+- `--version`: Display the current version of PromptShell
+- `--help`: Show help message and usage instructions
+- `--config`: Launch the interactive configuration wizard
 
 ### Alias Support
 
@@ -251,7 +260,7 @@ PromptShell is currently in **alpha stage** of development.
 
 ## 🤝 Contributing
 
-We welcome contributions! Here’s how to help:
+We welcome contributions! Here's how to help:
 
 1. Fork the repository.
 2. Create a branch: `git checkout -b feature/your-idea`.
