@@ -53,6 +53,13 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
 - Type 'clear' to clear the terminal.{reset_format()}""")
                 continue
 
+            # ✅ Handle alias command
+            if user_input.lower().startswith("alias "):
+                result = handle_alias_command(user_input, assistant.alias_manager)
+                print(result)
+                continue
+
+            # All other commands (including dangerous ones) are handled by the assistant
             result = assistant.execute_command(user_input)
             print(result)
 
