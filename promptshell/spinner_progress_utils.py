@@ -58,6 +58,16 @@ import random
 
 #--------SPINNER-------
 def spinner(spinner_type="dots", message=" [cyan]Working..."):
+    """
+    Decorator to display a spinner animation while a function is running.
+
+    Args:
+        spinner_type (str): Type of spinner (from rich SPINNERS or "random").
+        message (str): Message to display alongside the spinner.
+
+    Returns:
+        function: The wrapped function with spinner visualization.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -74,6 +84,18 @@ def spinner(spinner_type="dots", message=" [cyan]Working..."):
 
 #--------PROGRESS BAR-------
 def progress_bar(description="Downloading..."):
+    """
+    Decorator to add a progress bar to a generator function.
+
+    The wrapped function must yield tuples in the form (downloaded, total),
+    where 'downloaded' is the current progress and 'total' is the total work.
+
+    Args:
+        description (str): Text shown next to the progress bar.
+
+    Returns:
+        function: The wrapped generator function with a progress bar display.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):

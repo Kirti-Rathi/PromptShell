@@ -1,3 +1,11 @@
+"""
+Main entry point for the AI-Powered Terminal Assistant.
+
+This module initializes configuration, sets up terminal features, and
+launches a continuous input loop where user queries are processed
+either as shell commands or natural language queries via an AI assistant.
+"""
+
 from .ai_terminal_assistant import AITerminalAssistant
 from .readline_setup import setup_readline
 import platform
@@ -8,6 +16,19 @@ from .setup import setup_wizard, load_config, get_active_model
 from .alias_manager import handle_alias_command
 
 def main():
+    """
+    Initialize and run the terminal assistant.
+
+    - Loads user configuration or starts setup if none exists.
+    - Enables ANSI support and readline for better UX.
+    - Loads the AI model and enters an input loop.
+    - Supports:
+        - Shell command execution
+        - Natural language queries
+        - Aliases
+        - Help/config handling
+        - Graceful termination on 'quit' or keyboard interrupt.
+    """
     config = load_config()
     if not config:
         print("First-time setup required!")

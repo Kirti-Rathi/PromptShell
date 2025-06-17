@@ -10,12 +10,22 @@ from .format_utils import format_text, reset_format
 ALIAS_FILE = os.path.join(CONFIG_DIR, "aliases.json")
 
 class AliasManager:
+    """
+    Manages alias commands for the terminal assistant. Handles adding, removing,
+    listing, importing, exporting, and expanding command aliases.
+    """
     def __init__(self):
+        """
+        Initializes the AliasManager and loads any existing aliases from file.
+        """
         self.aliases = {}
         self.blacklist = ["rm -rf /", "chmod -R 777 /", ":(){:|:&};:", "mkfs", "dd if=/dev/random"]
         self.load_aliases()
     
     def load_aliases(self):
+        """
+        Loads aliases from the JSON alias file.
+        """
         if os.path.exists(ALIAS_FILE):
             try:
                 with open(ALIAS_FILE, 'r') as f:
@@ -25,19 +35,51 @@ class AliasManager:
                 self.aliases = {}
     
     def save_aliases(self):
+        """
+        Saves the current aliases to the JSON alias file.
+        """
         with open(ALIAS_FILE, 'w') as f:
             json.dump({'aliases': self.aliases}, f, indent=2)
     
     def validate_alias_name(self, name):
+        """
+        Validates an alias name using a regex pattern.
+
+        Args:
+            name (str): Alias name.
+
+        Returns:
+            bool: True if valid, False otherwise.
+        """
         return re.match(r'^[a-zA-Z_]\w*$', name) is not None
     
     def validate_command(self, command):
+        """
+        Validates a command to ensure it does not contain dangerous operations.
+
+        Args:
+            command (str): Shell command.
+
+        Returns:
+            bool: True if safe, False otherwise.
+        """
         for dangerous in self.blacklist:
             if dangerous in command:
                 return False
         return True
     
     def add_alias(self, name, command, description=""):
+        """
+        Adds a new alias to the alias list.
+
+        Args:
+            name (str): Alias name.
+            command (str): Shell command.
+            description (str): Optional description.
+
+        Returns:
+            tuple: (bool, message) indicating success or failure.
+        """
         if not self.validate_alias_name(name):
             return False, f"{format_text("red")}Invalid alias name: Name must be alphanumeric with underscores{reset_format()}"
         
@@ -57,6 +99,15 @@ class AliasManager:
         return True, f"Alias '{name}' added"
     
     def remove_alias(self, name):
+        """
+        Removes an alias by name.
+
+        Args:
+            name (str): Alias name.
+
+        Returns:
+            tuple: (bool, message) indicating result.
+        """
         if name not in self.aliases:
             return False, f"{format_text("red")}Alias not found{reset_format()}"
         
@@ -65,6 +116,15 @@ class AliasManager:
         return True, f"Alias '{name}' removed"
     
     def list_aliases(self, name=None):
+        """
+        Lists all aliases or a specific one by name.
+
+        Args:
+            name (str, optional): Alias name.
+
+        Returns:
+            dict or None: Alias details or all aliases.
+        """
         if name:
             return self.aliases.get(name, None)
         return self.aliases
@@ -72,6 +132,15 @@ class AliasManager:
     
 
     def import_aliases(self, file_path):
+        """
+        Imports aliases from a JSON file.
+
+        Args:
+            file_path (str): Path to the JSON file.
+
+        Returns:
+            tuple: (bool, message) indicating result.
+        """
         file_path = os.path.expanduser(file_path)  # Handles ~
         path_obj = Path(file_path)
 
@@ -94,6 +163,15 @@ class AliasManager:
     
     
     def export_aliases(self, file_path):
+        """
+        Exports current aliases to a JSON file.
+
+        Args:
+            file_path (str): Destination file path.
+
+        Returns:
+            tuple: (bool, message) indicating result.
+        """
         try:
             with open(file_path, 'w') as f:
                 json.dump({'aliases': self.aliases}, f, indent=2)
@@ -102,6 +180,15 @@ class AliasManager:
             return False, f"{format_text("red")}Export failed: {str(e)}{reset_format()}"
     
     def expand_alias(self, input_command):
+        """
+        Expands a command if it matches a defined alias.
+
+        Args:
+            input_command (str): Command entered by user.
+
+        Returns:
+            str: Expanded command or original input.
+        """
         parts = input_command.strip().split(maxsplit=1)
         if not parts:
             return input_command
@@ -115,6 +202,16 @@ class AliasManager:
         return input_command
 
 def handle_alias_command(command: str, alias_manager: AliasManager) -> str:
+    """
+    Handles CLI interaction for managing aliases.
+
+    Args:
+        command (str): Full alias command input from user.
+        alias_manager (AliasManager): Instance of AliasManager.
+
+    Returns:
+        str: Result message or error description.
+    """
     try:
         parts = shlex.split(command)
         if len(parts) < 2:

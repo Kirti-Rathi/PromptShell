@@ -3,6 +3,19 @@ import glob
 import os
 
 def setup_readline():
+    """
+    Sets up tab completion support for the command-line interface.
+
+    On Unix-like systems, it attempts to use the built-in `readline` module.
+    On Windows, it tries to use `pyreadline3`, and if not available, falls back to 
+    `prompt_toolkit` for enhanced input handling with tab-completion.
+
+    If none of these options are available, it disables tab completion and prints a warning.
+
+    Returns:
+        function or None: If `prompt_toolkit` is used, returns a prompt function with path completion.
+                          Otherwise, returns None.
+    """
     try:
         import readline  # Works on Unix-like systems
     except ImportError:
@@ -28,6 +41,16 @@ def setup_readline():
     readline.parse_and_bind("tab: complete")
 
     def complete(text, state):
+        """
+        Completer function for readline. Matches file paths based on current input.
+
+        Args:
+            text (str): The current input text to complete.
+            state (int): The state of the completion (0 for first match, 1 for next, etc.)
+
+        Returns:
+            str or None: The matching completion or None if no more matches.
+        """
         matches = glob.glob(os.path.expanduser(text) + "*") + [None]
         return matches[state]
 

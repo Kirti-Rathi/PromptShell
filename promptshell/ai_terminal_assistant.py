@@ -13,7 +13,31 @@ from .system_info import get_system_info
 from .alias_manager import AliasManager
 
 class AITerminalAssistant:
+    """An AI-powered terminal assistant that interprets natural language into shell commands,
+    executes them, handles errors, and provides debugging support.
+    
+    Attributes:
+        username (str): Current system username
+        home_folder (str): Path to user's home directory
+        current_directory (str): Current working directory
+        config (dict): Configuration settings
+        alias_manager (AliasManager): Manages command aliases
+        command_executor (Node): AI node for command generation
+        error_handler (Node): AI node for error analysis
+        debugger (Node): AI node for debugging
+        question_answerer (Node): AI node for answering questions
+        data_gatherer (DataGatherer): Collects additional system data
+        command_history (list): History of executed commands
+    """
+    
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
+        """Initialize the terminal assistant with AI models and system context.
+        
+        Args:
+            model_name (str): Name of the AI model to use
+            max_tokens (int): Maximum tokens for AI responses
+            config (dict, optional): Configuration dictionary
+        """
         self.username = getpass.getuser()
         self.home_folder = os.path.expanduser("~")
         self.current_directory = os.getcwd()
@@ -29,6 +53,9 @@ class AITerminalAssistant:
         self.initialize_system_context()
 
     def initialize_system_context(self):
+        """Initialize the system context for all AI nodes with current environment details,
+        installed commands, and role-specific guidelines.
+        """
         path_dirs = os.environ.get('PATH', '').split(os.pathsep)
         installed_commands = []
         for dir in path_dirs:
@@ -155,6 +182,14 @@ class AITerminalAssistant:
         """
 
     def execute_command_with_live_output(self, command: str) -> Tuple[str, str, int]:
+        """Execute a shell command and stream its output live to the console.
+        
+        Args:
+            command (str): The shell command to execute
+            
+        Returns:
+            Tuple[str, str, int]: (stdout, stderr, return_code)
+        """
         interactive_commands = [
             'vim', 'vi', 'nano', 'emacs', 'ssh', 'telnet', 'top', 'htop',
             'man', 'less', 'more', 'mysql', 'psql', 'nmtui', 'crontab',
@@ -184,6 +219,14 @@ class AITerminalAssistant:
             return "", str(e), 1
 
     def execute_interactive_command(self, command: str) -> Tuple[str, str, int]:
+        """Execute an interactive command that requires user input during execution.
+        
+        Args:
+            command (str): The interactive command to execute
+            
+        Returns:
+            Tuple[str, str, int]: (stdout, stderr, return_code)
+        """
         print(format_text('yellow') + "Executing interactive command..." + reset_format())
         try:
             proc = subprocess.Popen(
@@ -202,7 +245,15 @@ class AITerminalAssistant:
             return "", str(e), 1
 
     def execute_command(self, user_input: str) -> str:
-        try:
+       """Main method to process user input, generate commands, and execute them.
+        
+        Args:
+            user_input (str): Natural language command or direct shell command
+            
+        Returns:
+            str: Command output or error message
+        """
+       try:
             self.current_directory = os.getcwd()
             if user_input.strip() == "":
                 return "Please provide a valid input."
@@ -264,6 +315,14 @@ class AITerminalAssistant:
             return self.handle_error(str(e), user_input, command)
 
     def run_direct_command(self, command: str) -> str:
+        """Execute a direct shell command without natural language processing.
+        
+        Args:
+            command (str): The shell command to execute
+            
+        Returns:
+            str: Command output or error message
+        """
         try:
             formatted_command = format_text('cyan') + f"Direct Command: {command}" + reset_format()
             print(formatted_command)
@@ -291,6 +350,14 @@ class AITerminalAssistant:
             return self.handle_error(str(e), command, command)
 
     def answer_question(self, question: str) -> str:
+        """Answer technical questions using the AI model with command history context.
+        
+        Args:
+            question (str): The technical question to answer
+            
+        Returns:
+            str: Formatted answer with examples
+        """
         context = f"""
         Command History (last 10 commands):
         {', '.join(self.command_history)}
@@ -305,6 +372,14 @@ class AITerminalAssistant:
         return format_text('cyan') + "Answer:\n" + answer + reset_format()
 
     def gather_additional_data(self, user_input: str) -> dict:
+        """Gather relevant context data based on user input.
+        
+        Args:
+            user_input (str): The user's input command or query
+            
+        Returns:
+            dict: Dictionary of relevant contextual data
+        """
         additional_data = {}
         if "clipboard" in user_input.lower():
             clipboard_content = self.data_gatherer.get_clipboard_content()
@@ -322,6 +397,16 @@ class AITerminalAssistant:
         return additional_data
 
     def debug_error(self, command: str, error_output: str, exit_code: int) -> str:
+        """Analyze a failed command and provide debugging suggestions.
+        
+        Args:
+            command (str): The failed command
+            error_output (str): Error message from command execution
+            exit_code (int): Command exit code
+            
+        Returns:
+            str: Debugging suggestions and potential fixes
+        """
         context = f"""
         Command History (last 10 commands):
         {', '.join(self.command_history)}
@@ -339,6 +424,16 @@ class AITerminalAssistant:
         return self.debugger(debug_input)
 
     def handle_error(self, error: str, user_input: str, command: str) -> str:
+        """Handle execution errors by suggesting corrections and prompting for confirmation.
+        
+        Args:
+            error (str): Error message
+            user_input (str): Original user input
+            command (str): Command that caused the error
+            
+        Returns:
+            str: Error message and suggested correction
+        """
         error_analysis = self.error_handler(f"""
         Error: {error}
         User Input: {user_input}

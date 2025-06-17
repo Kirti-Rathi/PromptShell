@@ -16,6 +16,13 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "promptshell_config.conf")
 warning_printed = False  # Global variable to track if the warning has been printed
 
 def setup_wizard():
+    """
+    Interactive setup wizard to configure PromptShell settings.
+
+    Guides the user through selecting operation mode (local or API),
+    choosing a model, setting up API providers and keys, and saving
+    the configuration to a file.
+    """
     # Load existing configuration
     config = load_config()
 
@@ -248,6 +255,12 @@ def get_active_model():
         return config["API_MODEL"]
 
 def get_provider():
+    """
+    Returns the name of the currently active model based on the config.
+
+    Returns:
+        str: Name of the local or API model in use.
+    """
     config = load_config()
     if config["MODE"] == "api":
         return config["ACTIVE_API_PROVIDER"]
