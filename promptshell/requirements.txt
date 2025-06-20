@@ -9,3 +9,4 @@ pyperclip
 pyreadline3
 questionary
 rich
+keyring>=24.3.0

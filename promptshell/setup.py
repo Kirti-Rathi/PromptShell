@@ -2,6 +2,7 @@ import questionary
 import requests
 import os
 from .format_utils import format_text, reset_format
+from .secure_storage import set_api_key, migrate_config_keys
 
 # Determine the configuration directory based on the operating system
 if os.name == 'nt':  # Windows
@@ -165,28 +166,17 @@ def setup_wizard():
 
     # Update only the selected provider's API key
     if api_provider:
-        config[f"{api_provider.upper()}_API_KEY"] = api_key_dict[api_provider]
+        # Store key securely
+        if api_key_dict[api_provider]:
+            if set_api_key(api_provider, api_key_dict[api_provider]):
+                config[f"{api_provider.upper()}_API_KEY"] = "🔒 SECURE_STORAGE"
+            else:
+                # Fallback to config if secure storage fails
+                config[f"{api_provider.upper()}_API_KEY"] = api_key_dict[api_provider]
+                print(format_text("yellow") + "Warning: API key stored in config file instead of secure storage." + reset_format())
 
     # Generate Configuration File
-    config_content = f"""# PromptShell Configuration
-# ------------------------
-# Operation Mode (local/api)
-MODE={config["MODE"]}
-OLLAMA_HOST={config["OLLAMA_HOST"]}
-# Local Configuration
-LOCAL_MODEL={config["LOCAL_MODEL"]}
-# API Configuration
-ACTIVE_API_PROVIDER={config["ACTIVE_API_PROVIDER"]}
-API_MODEL={config["API_MODEL"]}
-# Provider API Keys (only set for your active provider)
-GROQ_API_KEY={config.get("GROQ_API_KEY", "")}
-OPENAI_API_KEY={config.get("OPENAI_API_KEY", "")}
-GOOGLE_API_KEY={config.get("GOOGLE_API_KEY", "")}
-ANTHROPIC_API_KEY={config.get("ANTHROPIC_API_KEY", "")}
-FIREWORKS_API_KEY={config.get("FIREWORKS_API_KEY", "")}
-OPENROUTER_API_KEY={config.get("OPENROUTER_API_KEY", "")}
-DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
-"""
+    config_content = generate_config_content(config)
 
     with open(CONFIG_FILE, "w") as file:
         file.write(config_content)
@@ -235,6 +225,9 @@ def load_config():
 
     config["MODE"] = config["MODE"].strip().lower()
 
+    # Migrate keys to secure storage
+    migrate_config_keys(config)
+    
     return config
 
 def get_active_model():
@@ -264,3 +257,25 @@ def get_provider():
         return config["ACTIVE_API_PROVIDER"]
     else:
         return "ollama"
+
+def generate_config_content(config: dict) -> str:
+    """Generate config file content with secure storage indicators"""
+    return f"""# PromptShell Configuration
+# ------------------------
+# Operation Mode (local/api)
+MODE={config.get("MODE", "local")}
+OLLAMA_HOST={config.get("OLLAMA_HOST", "http://localhost:11434")}
+# Local Configuration
+LOCAL_MODEL={config.get("LOCAL_MODEL", "llama3:8b-instruct-q4_1")}
+# API Configuration
+ACTIVE_API_PROVIDER={config.get("ACTIVE_API_PROVIDER", "None")}
+API_MODEL={config.get("API_MODEL", " ")}
+# Provider API Keys (🔒 indicates secure storage)
+GROQ_API_KEY={config.get("GROQ_API_KEY", "")}
+OPENAI_API_KEY={config.get("OPENAI_API_KEY", "")}
+GOOGLE_API_KEY={config.get("GOOGLE_API_KEY", "")}
+ANTHROPIC_API_KEY={config.get("ANTHROPIC_API_KEY", "")}
+FIREWORKS_API_KEY={config.get("FIREWORKS_API_KEY", "")}
+OPENROUTER_API_KEY={config.get("OPENROUTER_API_KEY", "")}
+DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
+"""
