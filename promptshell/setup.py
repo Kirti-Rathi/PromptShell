@@ -178,10 +178,10 @@ def setup_wizard():
     # Generate Configuration File
     config_content = generate_config_content(config)
 
-    with open(CONFIG_FILE, "w") as file:
+    with open(CONFIG_FILE, "w", encoding='utf-8') as file:
         file.write(config_content)
 
-    print(format_text("green", bg="black") + f"\n✅ Configuration updated! Saved to {CONFIG_FILE}" + reset_format())
+    print(format_text("green", bg="black") + f"\n✅ Configuration updated!" + reset_format())
     print(format_text("blue") + f"Active model: {get_active_model()}" + reset_format())
 
 def load_config():
@@ -212,16 +212,17 @@ def load_config():
             warning_printed = True  
         return config
 
-    with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue  
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue  
 
-            key_value = line.split("=", 1)
-            if len(key_value) == 2:
-                key, value = key_value
-                config[key.strip()] = value.strip()
+                key_value = line.split("=", 1)
+                if len(key_value) == 2:
+                    key, value = key_value
+                    config[key.strip()] = value.strip()
 
     config["MODE"] = config["MODE"].strip().lower()
 
