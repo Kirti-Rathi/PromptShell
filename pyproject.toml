@@ -27,7 +27,8 @@ dependencies = [
     "pyreadline3",
     "questionary",
     "rich",
-    "keyring>=24.3.0"
+    "keyring>=24.3.0",
+    "keyrings.alt"
 ]
 
 [project.scripts]

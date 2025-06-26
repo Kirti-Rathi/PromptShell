@@ -1,7 +1,16 @@
 import keyring
+import os
 from .format_utils import format_text, reset_format
 
 SERVICE_NAME = "PromptShell"
+
+try:
+    from keyrings.alt.file import PlaintextKeyring
+    keyring.set_keyring(PlaintextKeyring())
+except ImportError:
+    pass  # Proceed without keyrings.alt
+except Exception as e:
+    print(format_text('yellow') + f"⚠️ Keyring setup warning: {str(e)}" + reset_format())
 
 def set_api_key(provider: str, api_key: str):
     """Securely store API key in system keyring"""
