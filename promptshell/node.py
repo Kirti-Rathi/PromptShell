@@ -7,6 +7,7 @@ from groq import Groq
 from .setup import get_provider
 from typing import List, Tuple
 from .spinner_progress_utils import spinner, progress_bar
+from .secure_storage import get_api_key
 
 class Node:
     def __init__(self, model_name: str, name: str, max_tokens: int = 8192, config: dict = None):
@@ -116,7 +117,10 @@ user {input_text} """
             API response
         """
         
-        api_key = self.config["OPENAI_API_KEY"]
+        api_key = get_api_key("OpenAI") or self.config.get("OPENAI_API_KEY", "")
+        if not api_key:
+            return "Error: OPENAI_API_KEY not configured. Use --config to set up."
+            
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model=self.model_name,
@@ -135,7 +139,10 @@ user {input_text} """
             API response
         """
         
-        api_key = self.config["ANTHROPIC_API_KEY"]
+        api_key = get_api_key("Anthropic") or self.config.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return "Error: ANTHROPIC_API_KEY not configured. Use --config to set up."
+            
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model=self.model_name,
@@ -155,7 +162,10 @@ user {input_text} """
             API response
         """
         
-        api_key = self.config["GOOGLE_API_KEY"]
+        api_key = get_api_key("Google") or self.config.get("GOOGLE_API_KEY", "")
+        if not api_key:
+            return "Error: GOOGLE_API_KEY not configured. Use --config to set up."
+            
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(self.model_name)
         response = model.generate_content(prompt)
@@ -172,7 +182,10 @@ user {input_text} """
             API response
         """
         
-        api_key = self.config["GROQ_API_KEY"]
+        api_key = get_api_key("Groq") or self.config.get("GROQ_API_KEY", "")
+        if not api_key:
+            return "Error: GROQ_API_KEY not configured. Use --config to set up."
+            
         client = Groq(api_key=api_key)
         
         messages = [
@@ -208,7 +221,10 @@ user {input_text} """
             API response
         """
         
-        api_key = self.config["FIREWORKS_API_KEY"]
+        api_key = get_api_key("Fireworks") or self.config.get("FIREWORKS_API_KEY", "")
+        if not api_key:
+            return "Error: FIREWORKS_API_KEY not configured. Use --config to set up."
+            
         client = OpenAI(
             api_key=api_key,
             base_url="https://api.fireworks.ai/inference/v1/accounts/fireworks/models/",
@@ -231,7 +247,10 @@ user {input_text} """
             API response
         """
 
-        api_key = self.config["OPENROUTER_API_KEY"]
+        api_key = get_api_key("OpenRouter") or self.config.get("OPENROUTER_API_KEY", "")
+        if not api_key:
+            return "Error: OPENROUTER_API_KEY not configured. Use --config to set up."
+            
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
@@ -258,7 +277,10 @@ user {input_text} """
             API response
         """
 
-        api_key = self.config["DEEPSEEK_API_KEY"]
+        api_key = get_api_key("Deepseek") or self.config.get("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            return "Error: DEEPSEEK_API_KEY not configured. Use --config to set up."
+            
         client = OpenAI(
             api_key=api_key,
             base_url="https://api.deepseek.com/v1",
@@ -270,4 +292,3 @@ user {input_text} """
             temperature=0.3  # Recommended default for DeepSeek
         )
         return response.choices[0].message.content.strip()
-

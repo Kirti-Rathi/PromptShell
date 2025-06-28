@@ -26,7 +26,9 @@ dependencies = [
     "pyperclip",
     "pyreadline3",
     "questionary",
-    "rich"
+    "rich",
+    "keyring>=24.3.0",
+    "keyrings.alt"
 ]
 
 [project.scripts]

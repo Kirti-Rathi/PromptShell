@@ -163,6 +163,27 @@ Active model: #[Selected-model]
 Configuration updated!
 ```
 
+## API Key Security
+
+PromptShell uses your system's secure credential storage:
+- Windows: Credential Manager
+- macOS: Keychain
+- Linux: Secret Service API (GNOME Keyring/libsecret)
+
+Your API keys are automatically migrated from plaintext configuration to secure storage on first run. The configuration file will show `🔒 SECURE_STORAGE` for migrated keys.
+
+### Manual Key Management
+To view or manage keys:
+```bash
+# Windows
+cmdkey /list
+
+# macOS
+security find-generic-password -a "PromptShell"
+
+# Linux (GNOME)
+secret-tool search --all service "PromptShell"
+
 ---
 
 ## 🛠 Usage
