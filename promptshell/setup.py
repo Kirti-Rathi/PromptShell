@@ -2,7 +2,7 @@ import questionary
 import requests
 import os
 from .format_utils import format_text, reset_format
-from .secure_storage import set_api_key, migrate_config_keys
+from .secure_storage import set_api_key, migrate_config_keys, get_api_key
 
 # Determine the configuration directory based on the operating system
 if os.name == 'nt':  # Windows
@@ -137,25 +137,29 @@ def setup_wizard():
             if existing_api is None:
                 print(format_text("yellow") + "⚠️ API key confirmation cancelled. Exiting setup." + reset_format())
                 return
-            if not existing_api:
-                # Ask for API key securely if the user chooses not to reuse the existing key
+            if existing_api:
+                # Retrieve key from secure storage
+                secure_key = get_api_key(api_provider)
+                if secure_key:
+                    api_key_dict[api_provider] = secure_key
+                else:
+                    print(format_text("yellow") + "⚠️ Failed to retrieve secure key. Please enter it again." + reset_format())
+                    api_key_dict[api_provider] = questionary.password(
+                        f"Enter API key for {api_provider}:"
+                    ).ask()
+            else:
+                # Ask for new key if not reusing
                 api_key_dict[api_provider] = questionary.password(
                     f"Enter API key for {api_provider}:"
                 ).ask()
-                if not api_key_dict[api_provider]:
-                    print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
-                    return
-            else:
-                # Use the existing API key
-                api_key_dict[api_provider] = config[provider_key_name]
         else:
             # Ask for API key securely if not already saved
             api_key_dict[api_provider] = questionary.password(
                 f"Enter API key for {api_provider}:"
             ).ask()
-            if not api_key_dict[api_provider]:
-                print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
-                return
+        if not api_key_dict[api_provider]:
+            print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
+            return
 
     # Merge new configuration with existing configuration
     config["MODE"] = operation_mode

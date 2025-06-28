@@ -3,6 +3,7 @@ import os
 from .format_utils import format_text, reset_format
 
 SERVICE_NAME = "PromptShell"
+SECURE_STORAGE_PLACEHOLDER = "🔒 SECURE_STORAGE"
 
 try:
     from keyrings.alt.file import PlaintextKeyring
@@ -40,9 +41,10 @@ def migrate_config_keys(config: dict):
     migrated = False
     for provider in providers:
         key = f"{provider}_API_KEY"
-        if key in config and config[key]:
-            if set_api_key(provider, config[key]):
-                config[key] = "🔒 SECURE_STORAGE"
-                migrated = True
+        if key not in config or not config[key] or config[key] == SECURE_STORAGE_PLACEHOLDER:
+            continue
+        if set_api_key(provider, config[key]):
+            config[key] = SECURE_STORAGE_PLACEHOLDER
+            migrated = True
     
     return migrated
