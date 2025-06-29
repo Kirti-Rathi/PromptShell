@@ -229,7 +229,7 @@ class AITerminalAssistant:
             print(format_text('red') + f"Execution failed: {str(e)}" + reset_format())
             return "", str(e), 1
 
-    def execute_command(self, user_input: str) -> str:
+    def execute_command(self, user_input: str, return_exit_code: bool = False) -> str | tuple[str, int]:
         """Main method to execute user commands.
         
         Args:
@@ -298,13 +298,14 @@ class AITerminalAssistant:
                     if exit_code != 0:
                         debug_suggestion = self.debug_error(command, stderr, exit_code)
                         result += format_text('yellow') + f"\n\nDebugging Suggestion:\n{debug_suggestion}" + reset_format()
-                return result.strip()
+                return (result.strip(), exit_code) if return_exit_code else result.strip()
             else:
                 print(format_text('red') + "Command cancelled!" + reset_format())
-                return ""
+                return ("", 1) if return_exit_code else ""
         except Exception as e:
             print(format_text('red') + "Error in execute command" + reset_format())
-            return self.handle_error(str(e), user_input, command)
+            result = self.handle_error(str(e), user_input, command)
+            return (result, 1) if return_exit_code else result
 
     def run_direct_command(self, command: str) -> str:
         """Executes direct shell commands bypassing AI interpretation.

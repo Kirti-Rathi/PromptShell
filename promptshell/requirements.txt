@@ -9,3 +9,6 @@ pyperclip
 pyreadline3
 questionary
 rich
+SpeechRecognition>=3.10.0
+pyaudio
+pyttsx3>=2.90

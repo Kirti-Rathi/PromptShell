@@ -9,6 +9,7 @@ from .setup import setup_wizard, load_config, get_active_model
 from .alias_manager import handle_alias_command
 from .version import get_version
 from .tutorial import start_tutorial
+from .voice_input import listen_and_transcribe
 
 def main():
     """Main entry point for the terminal assistant."""
@@ -59,6 +60,31 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
                 start_tutorial()
                 continue
 
+            if user_input.lower() == "--listen":
+                print("🎤 Entering voice command mode. Say 'exit voice mode' to exit. (Still under development)")
+                try:
+                    from promptshell.tts import speak
+                except:
+                    speak = lambda x: None
+                try:
+                    while True:
+                        transcribed = listen_and_transcribe()
+                        if transcribed:
+                            if "exit voice mode" in transcribed.lower():
+                                print("🛑 Exiting voice mode.")
+                                speak("Voice mode exited.")
+                                break
+                            result, exit_code = assistant.execute_command(transcribed, return_exit_code=True)
+                            print(result)
+                            if exit_code!=0:
+                                speak("Command not executed.")
+                            else:
+                                speak("Command executed.")
+                except KeyboardInterrupt:
+                    print("\n🛑 Voice input manually stopped.")
+                user_input=""
+                continue
+            
             if user_input.lower() == "--help":
                 col_width = 18 
                 print(f"""
@@ -71,6 +97,7 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
   {format_text('green')}{'--help':<{col_width}}{reset_format()}Show this help message
   {format_text('green')}{'--tutorial':<{col_width}}{reset_format()}Start the interactive tutorial
   {format_text('green')}{'--config':<{col_width}}{reset_format()}Re-run the setup wizard to change AI provider or model
+  {format_text('green')}{'--listen':<{col_width}}{reset_format()}Speak commands via mic (say 'stop listening' to exit)
   {format_text('green')}{'alias':<{col_width}}{reset_format()}Manage command shortcuts (use 'alias help' for details)
   {format_text('green')}{'clear / cls':<{col_width}}{reset_format()}Clear the terminal screen
   {format_text('green')}{'exit / quit':<{col_width}}{reset_format()}Terminate the assistant
