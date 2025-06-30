@@ -1,5 +1,5 @@
 from .ai_terminal_assistant import AITerminalAssistant
-from .readline_setup import setup_readline
+from .readline_setup import setup_readline, clear_screen 
 import platform
 import os
 import sys
@@ -26,6 +26,7 @@ def main():
 
     enable_ansi_support()
     setup_readline()
+    custom_input = setup_readline() 
     model_name = get_active_model()
 
     assistant = AITerminalAssistant(config=config, model_name=model_name)
@@ -46,6 +47,22 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
             if user_input.lower() in  ('quit', 'exit'):
                 print(format_text('red', bold=True) + "\nTerminating..." + reset_format())
                 break
+            
+             # Use custom input if available (from prompt_toolkit), otherwise use standard input
+            if custom_input:
+                user_input = custom_input(prompt).strip()
+            else:
+                user_input = input(prompt).strip()
+                
+            # Handle Ctrl+L clear screen command
+            if user_input == "clear_screen":
+                clear_screen()
+                continue
+
+            # Handle clear/cls commands
+            if user_input.lower() in ('clear', 'cls'):
+                clear_screen()
+                continue
 
             if user_input.lower() == "--config":
                 setup_wizard()
