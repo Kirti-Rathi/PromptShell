@@ -3,6 +3,8 @@ import glob
 import os
 
 def setup_readline():
+    """Configures tab completion and history support."""
+    
     try:
         import readline  # Works on Unix-like systems
     except ImportError:

@@ -2,6 +2,18 @@ import os
 import platform
 
 def format_text(fg, bg=None, inverted=False, bold=False):
+    """Formats text with ANSI escape sequences.
+    
+    Args:
+        fg: Foreground color name
+        bg: Background color name (optional)
+        inverted: Invert colors flag (default: False)
+        bold: Bold text flag (default: False)
+        
+    Returns:
+        ANSI formatted string
+    """
+    
     reset = "\033[0m"
     result = reset
     if bold:
@@ -18,9 +30,21 @@ def format_text(fg, bg=None, inverted=False, bold=False):
     return result
 
 def reset_format():
+    """Resets text formatting.
+    
+    Returns:
+        ANSI reset code
+    """
+    
     return "\033[0m"
 
 def get_terminal_size():
+    """Get terminal size with fallback to default values.
+    
+    Returns:
+        Tuple (columns, rows)
+    """
+
     try:
         columns, rows = os.get_terminal_size(0)
     except OSError:
@@ -28,12 +52,22 @@ def get_terminal_size():
     return columns, rows
 
 def get_current_os():
-    """Detect and normalize current operating system"""
+    """Detect and normalize current operating system
+    
+    Returns:
+        Normalized OS name (windows/macos/linux)
+    """
+
     system = platform.system().lower()
     return 'windows' if system == 'windows' else 'macos' if system == 'darwin' else 'linux'
 
 def get_os_specific_examples():
-    """Return OS-appropriate command examples"""
+    """Return OS-appropriate command examples
+    
+    Returns:
+        List of example commands
+    """
+    
     current_os = get_current_os()
     examples = {
         'windows': [

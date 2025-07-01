@@ -16,6 +16,8 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "promptshell_config.conf")
 warning_printed = False  # Global variable to track if the warning has been printed
 
 def setup_wizard():
+    """Interactive configuration setup wizard."""
+
     # Load existing configuration
     config = load_config()
 
@@ -237,9 +239,12 @@ def load_config():
 
 def get_active_model():
     """
-    Returns the active model name based on the operation mode.
+    Gets active AI model name based on the operation mode.
+
+    Returns the model name.
     Uses 'LOCAL_MODEL' if in local mode, otherwise 'API_MODEL'.
     """
+    
     config = load_config()
 
     if config["MODE"] == "local":
@@ -248,6 +253,12 @@ def get_active_model():
         return config["API_MODEL"]
 
 def get_provider():
+    """Gets current AI provider.
+    
+    Returns:
+        Provider name string
+    """
+
     config = load_config()
     if config["MODE"] == "api":
         return config["ACTIVE_API_PROVIDER"]

@@ -21,6 +21,20 @@ https://github.com/user-attachments/assets/c2ba7d09-83ea-4d10-a825-92c30f28c0bd
 
 ---
 
+## 📖 Table of Contents
+
+* [Features](#-features)
+* [Installation](#-installation)
+* [Configuration](#️-configuration)
+* [Usage](#-usage)
+* [Examples](#-examples)
+* [Development Status](#-development-status)
+* [Contributing](#-contributing)
+* [License](#-license)
+* [Contact](#-contact)
+
+---
+
 ## ✨ Features
 
 ### 🚀 Redefine Your Terminal Experience
@@ -41,9 +55,11 @@ https://github.com/user-attachments/assets/c2ba7d09-83ea-4d10-a825-92c30f28c0bd
 
 - 🔍**Smart Autocompletion**: Provides tab completions for files and folder present in working directory.
 
-- 🤖 **Direct Execution & Queries**: Directly execute shell commands with '!' (e.g., !ls -la), or Ask shell-related questions using '?' (e.g., How do I create a new SSH key?).
+- 🤖**Direct Execution & Queries**: Directly execute shell commands with '!' (e.g., !ls -la), or Ask shell-related questions using '?' (e.g., How do I create a new SSH key?).
 
-- 🐳 **Built-in Support for Git, Docker, and Dev Tools**: Seamlessly understands and executes Git, Docker, Kubernetes, and package manager commands.
+- 🐳**Built-in Support for Git, Docker, and Dev Tools**: Seamlessly understands and executes Git, Docker, Kubernetes, and package manager commands.
+
+- 🏷️**User Defined Aliases**: The alias system allows you to create, remove, list, import and export shortcuts for complex commands.
 
 ---
 
@@ -164,10 +180,13 @@ $ backup all .txt files in a folder named backup
 $ !mkdir backup && copy *.txt backup\
 
 # Ask questions by prefixing or suffixing your query with '?'
-$ What’s the command to list all hidden files?
+$ What's the command to list all hidden files?
 
 # Configure or change the LLM provider
 $ --config
+
+# Start the interactive tutorial
+$ --tutorial
 
 # View help and usage instructions
 $ --help
@@ -177,6 +196,34 @@ $ clear
 
 # Exit PromptShell
 $ quit
+```
+
+### CLI Options
+- `--version`: Display the current version of PromptShell
+
+### Alias Support
+
+Create shortcuts for frequently used commands:
+
+```bash
+# Create an alias
+alias add gpm "git push origin main"
+
+# Use the alias
+!gpm
+
+# List all aliases
+alias list
+
+# List a specified alias
+alias list <alias_name>
+
+# Remove an alias
+alias remove gpm
+
+# Import/export aliases
+alias import ~/backup/aliases.json
+alias export ~/backup/aliases.json
 ```
 
 ---
@@ -224,7 +271,7 @@ PromptShell is currently in **alpha stage** of development.
 
 ## 🤝 Contributing
 
-We welcome contributions! Here’s how to help:
+We welcome contributions! Here's how to help:
 
 1. Fork the repository.
 2. Create a branch: `git checkout -b feature/your-idea`.

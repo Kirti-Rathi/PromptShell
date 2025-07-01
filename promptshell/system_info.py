@@ -1,7 +1,12 @@
 import platform
 
 def get_system_info() -> dict:
-    """Retrieve system information as a dictionary with structured data."""
+    """Retrieve system information as a dictionary with structured data.
+    
+    Returns:
+        Dictionary of system properties
+    """
+    
     try:
         return {
             'os': platform.system(),
