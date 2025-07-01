@@ -459,3 +459,6 @@ class AITerminalAssistant:
         print(format_text('yellow') + "\nFor safety, please re-type or paste the exact command to proceed:" + reset_format())
         user_input = input("> ").strip()
         return user_input == command
+    def get_history(self):
+        """Return the last 10 commands entered in this session."""
+        return self.command_history[-10:]
