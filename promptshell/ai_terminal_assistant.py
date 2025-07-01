@@ -5,13 +5,11 @@ import getpass
 import sys
 import platform
 import questionary
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple
 from .node import Node
 from .data_gatherer import DataGatherer
 from .format_utils import format_text, reset_format, get_current_os, get_os_specific_examples
 from .system_info import get_system_info
-from .database import get_database_provider, CloudDatabase
-import datetime
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
@@ -26,32 +24,8 @@ class AITerminalAssistant:
         self.question_answerer = Node(model_name, "Question Answerer", max_tokens=max_tokens, config=self.config)
         self.data_gatherer = DataGatherer()
         self.command_history = []
-        self.database = None
 
         self.initialize_system_context()
-        self.initialize_database()
-
-    def initialize_database(self):
-        """Initialize cloud database connection if configured"""
-        if self.config.get("DB_PROVIDER"):
-            self.database = get_database_provider(self.config["DB_PROVIDER"], self.config)
-            if self.database and self.database.connect():
-                print(format_text("green") + f"✅ Connected to {self.config['DB_PROVIDER']} database" + reset_format())
-            else:
-                print(format_text("yellow") + f"⚠️ Failed to connect to {self.config['DB_PROVIDER']} database" + reset_format())
-                self.database = None
-
-    def save_to_database(self, data: Dict[str, Any]) -> bool:
-        """Save data to the configured cloud database"""
-        if not self.database:
-            return False
-        return self.database.save_data(data)
-
-    def load_from_database(self, query: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Load data from the configured cloud database"""
-        if not self.database:
-            return None
-        return self.database.load_data(query)
 
     def initialize_system_context(self):
         path_dirs = os.environ.get('PATH', '').split(os.pathsep)
@@ -82,102 +56,51 @@ class AITerminalAssistant:
         Platform: {system_info.get('platform', 'Unknown')}
         Path: {self.current_directory}
         Installations: {', '.join(installed_commands[:75])}
-        
-        [GUIDELINES]
-        1. Output ONLY valid shell commands - no explanations
-        2. Prefer built-in tools over external dependencies
-        3. Security priority: Add 'CONFIRM:' prefix for:
-        - File deletion (rm, del)
-        - System modifications (chmod, format)
-        - Network operations (ssh, scp)
-        - Package management (apt, yum)
-        4. OS-specific patterns:
-        Windows: Use 'dir', 'where', 'tasklist'
-        Unix: Use 'ls', 'which', 'ps'
-        5. Handle spaces in paths with proper quoting
-        6. For multi-step operations, use && or ;
-        
-        [SAFETY PROTOCOLS]
-        - Never suggest commands that could damage system
-        - Reject unsafe requests with: "SafetyError: [reason]"
-        - Validate file existence before operations
-        - Prefer read-only alternatives first
-        
-        [EXAMPLES]
-        User: List large PDFs
-        CMD: find . -name "*.pdf" -size +5M
-        User: Search config for 'timeout'
-        CMD: grep -rnw './' -e 'timeout'
         """
 
-        self.error_handler.definition = f"""
-        [ROLE] Command Error Diagnostician
-        [TASK] Analyze failed commands and suggest fixes
-        
-        [ANALYSIS FRAMEWORK]
-        1. Check path resolution
-        2. Verify command exists in {path_dirs}
-        3. Validate file/directory permissions
-        4. Check argument syntax
-        5. Look for typos or similar valid commands
-        
-        [OUTPUT FORMAT]
-        [Error Type]: Brief description
-        [Solution]: Single corrected command
-        [Alternative]: Safer alternative if available
-        
-        [EXAMPLES]
-        Error: 'rm: missing operand'
-        Solution: Confirm file existence with 'ls'
-        Alternative: Use trash-cli instead of rm
-        """
-        
-        self.debugger.definition = f"""
-        [ROLE] Shell Environment Debugger
-        [TASK] Diagnose complex system issues
-        
-        [DIAGNOSTIC TOOLS]
-        - Check environment variables
-        - Verify service statuses
-        - Analyze process tree
-        - Review recent system changes
-        - Test network connectivity
-        
-        [OUTPUT STRUCTURE]
-        1. Identified Issue
-        2. Confidence Level (High/Med/Low)
-        3. Immediate Fix
-        4. Long-term Solution
-        5. Verification Command
-        
-        [EXAMPLE]
-        Issue: Missing PATH entry
-        Fix: export PATH=$PATH:/missing/path
-        Verify: echo $PATH | grep '/missing/path'
-        """
-
-        self.question_answerer.definition = f"""
-        [ROLE] Technical Knowledge Engineer
-        [TASK] Provide accurate, context-aware answers
-        
-        [RESPONSE GUIDELINES]
-        1. Start with direct answer
-        2. Add OS-specific notes
-        3. Include basic example
-        4. Mention alternatives
-        5. Add safety considerations
-        
-        [CONTEXT AWARENESS]
-        - Current directory: {self.current_directory}
-        - Recent commands: {self.command_history[-3:]}
-        - System resources: {system_info.get('memory', 'Unknown')}
-        
-        [EXAMPLE]
-        Question: Monitor CPU usage?
-        Answer: Use 'top' (Linux) or 'perfmon' (Win)
-        Linux Example: 'top -o %CPU'
-        Windows Example: 'perfmon /res'
-        """
+    def execute_command(self, user_input: str) -> str:
+        try:
+            self.current_directory = os.getcwd()
+            if user_input.strip() == "":
+                return ""
+            command = self.command_executor(user_input)
+            if not command:
+                return format_text('red') + "No command generated." + reset_format()
+            if any(destructive in command.lower() for destructive in ['rm -rf', 'format', 'dd if=']):
+                command = f"CONFIRM:{command}"
+            choice = questionary.confirm(
+                f"Execute command: {command}",
+                default=False
+            ).ask()
+            if choice:
+                if command.startswith("CONFIRM:"):
+                    confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[8:]}'?").ask()
+                    if not confirmation:
+                        return format_text('red') + "Command execution aborted." + reset_format()
+                    command = command[8:]
+                formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
+                print(formatted_command)
+                self.command_history.append(command)
+                if len(self.command_history) > 10:
+                    self.command_history.pop(0)
+                if command.startswith("cd "):
+                    path = command.split(" ", 1)[1]
+                    os.chdir(os.path.expanduser(path))
+                    result = f"Changed directory to {os.getcwd()}"
+                    exit_code = 0
+                else:
+                    stdout, stderr, exit_code = self.execute_command_with_live_output(command)
+                    result = ""
+                    if exit_code != 0:
+                        debug_suggestion = self.debug_error(command, stderr, exit_code)
+                        result += format_text('yellow') + f"\n\nDebugging Suggestion:\n{debug_suggestion}" + reset_format()
+                return result.strip()
+            else:
+                print(format_text('red') + "Command cancelled!" + reset_format())
+                return ""
+        except Exception as e:
+            print(format_text('red') + "Error in execute command" + reset_format())
+            return self.handle_error(str(e), user_input, command)
 
     def execute_command_with_live_output(self, command: str) -> Tuple[str, str, int]:
         interactive_commands = [
@@ -225,84 +148,6 @@ class AITerminalAssistant:
         except Exception as e:
             print(format_text('red') + f"Execution failed: {str(e)}" + reset_format())
             return "", str(e), 1
-
-    def execute_command(self, user_input: str) -> str:
-        try:
-            # Save command to database if configured
-            if self.database:
-                command_data = {
-                    "command": user_input,
-                    "timestamp": str(datetime.datetime.now()),
-                    "user": self.username,
-                    "directory": self.current_directory
-                }
-                self.save_to_database(command_data)
-
-            self.current_directory = os.getcwd()
-            if user_input.strip() == "":
-                return "Please provide a valid input."
-            if user_input.startswith('?') or user_input.endswith('?'):
-                return self.answer_question(user_input)
-            if user_input.lower().strip() == 'clear' or user_input.lower().strip() == 'cls':
-                if get_current_os() == 'windows':
-                    os.system('cls')
-                else:
-                    os.system('clear')
-                return ""
-            if user_input.startswith('!'):
-                return self.run_direct_command(user_input[1:])
-            additional_data = self.gather_additional_data(user_input)
-            command = self.command_executor(f"""
-            User Input: {user_input}
-            Current OS: {get_current_os()}
-            Current OS specific examples: {get_os_specific_examples()}
-            Current Directory: {self.current_directory}
-            Translate the user input into a SINGLE shell command according to the operating system.
-            Return ONLY the command, nothing else.
-            If the input is already a valid shell command, return it as is.
-            Do not provide any explanations or comments.
-            Use the actual filenames and content provided in the additional data.
-            """, additional_data=additional_data).strip()
-
-            # Check if command needs confirmation
-            if any(destructive in command.lower() for destructive in ['rm -rf', 'format', 'dd if=']):
-                command = f"CONFIRM:{command}"
-
-            # Ask for confirmation
-            choice = questionary.confirm(
-                f"Execute command: {command}",
-                default=False
-            ).ask()
-
-            if choice:
-                if command.startswith("CONFIRM:"):
-                    confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[8:]}'?").ask()
-                    if not confirmation:
-                        return format_text('red') + "Command execution aborted." + reset_format()
-                    command = command[8:]
-                formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
-                print(formatted_command)
-                self.command_history.append(command)
-                if len(self.command_history) > 10:
-                    self.command_history.pop(0)
-                if command.startswith("cd "):
-                    path = command.split(" ", 1)[1]
-                    os.chdir(os.path.expanduser(path))
-                    result = f"Changed directory to {os.getcwd()}"
-                    exit_code = 0
-                else:
-                    stdout, stderr, exit_code = self.execute_command_with_live_output(command)
-                    result = ""
-                    if exit_code != 0:
-                        debug_suggestion = self.debug_error(command, stderr, exit_code)
-                        result += format_text('yellow') + f"\n\nDebugging Suggestion:\n{debug_suggestion}" + reset_format()
-                return result.strip()
-            else:
-                print(format_text('red') + "Command cancelled!" + reset_format())
-                return ""
-        except Exception as e:
-            print(format_text('red') + "Error in execute command" + reset_format())
-            return self.handle_error(str(e), user_input, command)
 
     def run_direct_command(self, command: str) -> str:
         try:
@@ -396,7 +241,6 @@ class AITerminalAssistant:
             return self.execute_command(error_analysis)
         return format_text('red') + "Command execution aborted." + reset_format()
 
-    def __del__(self):
-        """Cleanup database connection when the assistant is destroyed"""
-        if self.database:
-            self.database.disconnect()
+    def get_history(self):
+        """Return the last 10 commands entered in this session."""
+        return self.command_history[-10:]
