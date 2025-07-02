@@ -11,6 +11,8 @@ from .data_gatherer import DataGatherer
 from .format_utils import format_text, reset_format, get_current_os, get_os_specific_examples
 from .system_info import get_system_info
 from .alias_manager import AliasManager
+from .history_manager import append_history, get_last_n_history
+import shutil
 
 class AITerminalAssistant:
     def __init__(self, model_name: str, max_tokens: int = 8000, config: dict = None):
@@ -256,7 +258,29 @@ class AITerminalAssistant:
                 expanded = self.alias_manager.expand_alias(user_input[1:].strip())
                 if expanded != user_input[1:]:
                     print(f"Expanded to: {expanded}")
+                append_history(user_input, expanded)
                 return self.run_direct_command(expanded)
+            if user_input.lower() == "--history":
+                history = get_last_n_history(10)
+                lines = []
+                lines.append("PromptShell Command History")
+                lines.append("\u2500" * 44)
+                for idx, entry in enumerate(history, 1):
+                    ts = entry["timestamp"].replace("T", " ")
+                    lines.append(f"[{idx}] {ts}")
+                    lines.append(f"    Input:      {entry['natural_language']}")
+                    lines.append(f"    Translated:   {entry['shell_command']}\n")
+                output = "\n".join(lines)
+                # Paginate if >30 lines
+                if len(lines) > 30:
+                    pager = os.environ.get("PAGER")
+                    if not pager:
+                        pager = "less -R" if platform.system().lower() != "windows" else "more"
+                    proc = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE)
+                    proc.communicate(output.encode("utf-8"))
+                else:
+                    print(output)
+                return ""
             additional_data = self.gather_additional_data(user_input)
             command = self.command_executor(f"""
             User Input: {user_input}
@@ -284,9 +308,7 @@ class AITerminalAssistant:
                     command = command[9:]
                 formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
                 print(formatted_command)
-                self.command_history.append(command)
-                if len(self.command_history) > 10:
-                    self.command_history.pop(0)
+                append_history(user_input, command)
                 if command.startswith("cd "):
                     path = command.split(" ", 1)[1]
                     os.chdir(os.path.expanduser(path))
@@ -319,9 +341,6 @@ class AITerminalAssistant:
         try:
             formatted_command = format_text('cyan') + f"Direct Command: {command}" + reset_format()
             print(formatted_command)
-            self.command_history.append(command)
-            if len(self.command_history) > 10:
-                self.command_history.pop(0)
             if command.startswith("cd "):
                 path = command.split(" ", 1)[1]
                 os.chdir(os.path.expanduser(path))
@@ -459,6 +478,4 @@ class AITerminalAssistant:
         print(format_text('yellow') + "\nFor safety, please re-type or paste the exact command to proceed:" + reset_format())
         user_input = input("> ").strip()
         return user_input == command
-    def get_history(self):
-        """Return the last 10 commands entered in this session."""
-        return self.command_history[-10:]
+
