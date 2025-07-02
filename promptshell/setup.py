@@ -2,6 +2,7 @@ import questionary
 import requests
 import os
 from .format_utils import format_text, reset_format
+from .secure_storage import set_api_key, migrate_config_keys, get_api_key
 
 # Determine the configuration directory based on the operating system
 if os.name == 'nt':  # Windows
@@ -136,25 +137,29 @@ def setup_wizard():
             if existing_api is None:
                 print(format_text("yellow") + "⚠️ API key confirmation cancelled. Exiting setup." + reset_format())
                 return
-            if not existing_api:
-                # Ask for API key securely if the user chooses not to reuse the existing key
+            if existing_api:
+                # Retrieve key from secure storage
+                secure_key = get_api_key(api_provider)
+                if secure_key:
+                    api_key_dict[api_provider] = secure_key
+                else:
+                    print(format_text("yellow") + "⚠️ Failed to retrieve secure key. Please enter it again." + reset_format())
+                    api_key_dict[api_provider] = questionary.password(
+                        f"Enter API key for {api_provider}:"
+                    ).ask()
+            else:
+                # Ask for new key if not reusing
                 api_key_dict[api_provider] = questionary.password(
                     f"Enter API key for {api_provider}:"
                 ).ask()
-                if not api_key_dict[api_provider]:
-                    print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
-                    return
-            else:
-                # Use the existing API key
-                api_key_dict[api_provider] = config[provider_key_name]
         else:
             # Ask for API key securely if not already saved
             api_key_dict[api_provider] = questionary.password(
                 f"Enter API key for {api_provider}:"
             ).ask()
-            if not api_key_dict[api_provider]:
-                print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
-                return
+        if not api_key_dict[api_provider]:
+            print(format_text("yellow") + "⚠️ API key input cancelled. Exiting setup." + reset_format())
+            return
 
     # Merge new configuration with existing configuration
     config["MODE"] = operation_mode
@@ -165,33 +170,22 @@ def setup_wizard():
 
     # Update only the selected provider's API key
     if api_provider:
-        config[f"{api_provider.upper()}_API_KEY"] = api_key_dict[api_provider]
+        # Store key securely
+        if api_key_dict[api_provider]:
+            if set_api_key(api_provider, api_key_dict[api_provider]):
+                config[f"{api_provider.upper()}_API_KEY"] = "🔒 SECURE_STORAGE"
+            else:
+                # Fallback to config if secure storage fails
+                config[f"{api_provider.upper()}_API_KEY"] = api_key_dict[api_provider]
+                print(format_text("yellow") + "Warning: API key stored in config file instead of secure storage." + reset_format())
 
     # Generate Configuration File
-    config_content = f"""# PromptShell Configuration
-# ------------------------
-# Operation Mode (local/api)
-MODE={config["MODE"]}
-OLLAMA_HOST={config["OLLAMA_HOST"]}
-# Local Configuration
-LOCAL_MODEL={config["LOCAL_MODEL"]}
-# API Configuration
-ACTIVE_API_PROVIDER={config["ACTIVE_API_PROVIDER"]}
-API_MODEL={config["API_MODEL"]}
-# Provider API Keys (only set for your active provider)
-GROQ_API_KEY={config.get("GROQ_API_KEY", "")}
-OPENAI_API_KEY={config.get("OPENAI_API_KEY", "")}
-GOOGLE_API_KEY={config.get("GOOGLE_API_KEY", "")}
-ANTHROPIC_API_KEY={config.get("ANTHROPIC_API_KEY", "")}
-FIREWORKS_API_KEY={config.get("FIREWORKS_API_KEY", "")}
-OPENROUTER_API_KEY={config.get("OPENROUTER_API_KEY", "")}
-DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
-"""
+    config_content = generate_config_content(config)
 
-    with open(CONFIG_FILE, "w") as file:
+    with open(CONFIG_FILE, "w", encoding='utf-8') as file:
         file.write(config_content)
 
-    print(format_text("green", bg="black") + f"\n✅ Configuration updated! Saved to {CONFIG_FILE}" + reset_format())
+    print(format_text("green", bg="black") + f"\n✅ Configuration updated!" + reset_format())
     print(format_text("blue") + f"Active model: {get_active_model()}" + reset_format())
 
 def load_config():
@@ -222,19 +216,23 @@ def load_config():
             warning_printed = True  
         return config
 
-    with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue  
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue  
 
-            key_value = line.split("=", 1)
-            if len(key_value) == 2:
-                key, value = key_value
-                config[key.strip()] = value.strip()
+                key_value = line.split("=", 1)
+                if len(key_value) == 2:
+                    key, value = key_value
+                    config[key.strip()] = value.strip()
 
     config["MODE"] = config["MODE"].strip().lower()
 
+    # Migrate keys to secure storage
+    migrate_config_keys(config)
+    
     return config
 
 def get_active_model():
@@ -264,3 +262,25 @@ def get_provider():
         return config["ACTIVE_API_PROVIDER"]
     else:
         return "ollama"
+
+def generate_config_content(config: dict) -> str:
+    """Generate config file content with secure storage indicators"""
+    return f"""# PromptShell Configuration
+# ------------------------
+# Operation Mode (local/api)
+MODE={config.get("MODE", "local")}
+OLLAMA_HOST={config.get("OLLAMA_HOST", "http://localhost:11434")}
+# Local Configuration
+LOCAL_MODEL={config.get("LOCAL_MODEL", "llama3:8b-instruct-q4_1")}
+# API Configuration
+ACTIVE_API_PROVIDER={config.get("ACTIVE_API_PROVIDER", "None")}
+API_MODEL={config.get("API_MODEL", " ")}
+# Provider API Keys (🔒 indicates secure storage)
+GROQ_API_KEY={config.get("GROQ_API_KEY", "")}
+OPENAI_API_KEY={config.get("OPENAI_API_KEY", "")}
+GOOGLE_API_KEY={config.get("GOOGLE_API_KEY", "")}
+ANTHROPIC_API_KEY={config.get("ANTHROPIC_API_KEY", "")}
+FIREWORKS_API_KEY={config.get("FIREWORKS_API_KEY", "")}
+OPENROUTER_API_KEY={config.get("OPENROUTER_API_KEY", "")}
+DEEPSEEK_API_KEY={config.get("DEEPSEEK_API_KEY", "")}
+"""
