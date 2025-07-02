@@ -11,3 +11,5 @@ questionary
 rich
 keyring>=24.3.0
 keyrings.alt
+pytest
+pytest-mock

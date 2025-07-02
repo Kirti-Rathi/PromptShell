@@ -1,5 +1,4 @@
 import pytest
-import keyring
 from unittest.mock import patch
 from promptshell.secure_storage import set_api_key, get_api_key, migrate_config_keys
 

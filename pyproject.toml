@@ -28,7 +28,9 @@ dependencies = [
     "questionary",
     "rich",
     "keyring>=24.3.0",
-    "keyrings.alt"
+    "keyrings.alt",
+    "pytest",
+    "pytest-mock"
 ]
 
 [project.scripts]

@@ -173,16 +173,30 @@ PromptShell uses your system's secure credential storage:
 Your API keys are automatically migrated from plaintext configuration to secure storage on first run. The configuration file will show `🔒 SECURE_STORAGE` for migrated keys.
 
 ### Manual Key Management
-To view or manage keys:
-```bash
-# Windows
-cmdkey /list
+By default PromptShell uses the `keyrings.alt` backends (if installed). To view or manage your migrated API keys, use your OS’s credential tools or inspect the keyring files directly:
 
-# macOS
-security find-generic-password -a "PromptShell"
+- **Windows (Credential Manager)**  
+  ```bash
+  cmdkey /list
+  ```
+  Keyring file (if you need the raw file):
+  ```makefile
+  C:\Users\<username>\AppData\Local\Python Keyring\keyring_pass.cfg
+  ```
 
-# Linux (GNOME)
-secret-tool search --all service "PromptShell"
+- **macOS (Keychain Access)**
+  ```bash
+  security find-generic-password -a "PromptShell"
+  ```
+
+- **Linux (GNOME Secret Service API via keyrings.alt)**
+  ```bash
+  secret-tool search --all service "PromptShell"
+  ```
+  Keyring file (if you need the raw file):
+  ```ruby
+  ~/.local/share/python_keyring/keyring_pass.cfg
+  ```
 
 ---
 
