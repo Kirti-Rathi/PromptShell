@@ -252,7 +252,8 @@ class AITerminalAssistant:
                     os.system('clear')
                 return ""
             if user_input.startswith('!'):
-                expanded = self.alias_manager.expand_alias(user_input[1:])
+                user_input = "!cd .." if user_input[1:].strip() == "cd.." else user_input # generally cd.. works but 'cd ..' is the right syntax
+                expanded = self.alias_manager.expand_alias(user_input[1:].strip())
                 if expanded != user_input[1:]:
                     print(f"Expanded to: {expanded}")
                 return self.run_direct_command(expanded)
@@ -272,10 +273,15 @@ class AITerminalAssistant:
             choice = questionary.confirm(f"Do you want to run the command '{command}'?").ask()
             if choice:
                 if command.startswith("CONFIRM:"):
-                    confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[8:]}'?").ask()
+                    confirmation = questionary.confirm(f"Warning: This command may be destructive. Are you sure you want to run '{command[9:]}'?").ask()
                     if not confirmation:
                         return format_text('red') + "Command execution aborted." + reset_format()
-                    command = command[8:]
+                    
+                    # Add second-layer verification for dangerous commands
+                    if not self.verify_dangerous_command(command[9:]):
+                        return format_text('red') + "Command verification failed. Execution aborted." + reset_format()
+                    
+                    command = command[9:]
                 formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
                 print(formatted_command)
                 self.command_history.append(command)
@@ -440,3 +446,16 @@ class AITerminalAssistant:
         if confirmation:
             return self.execute_command(error_analysis)
         return format_text('red') + "Command execution aborted." + reset_format()
+
+    def verify_dangerous_command(self, command: str) -> bool:
+        """Verify dangerous command by asking user to re-type it.
+        
+        Args:
+            command: The command to verify
+            
+        Returns:
+            bool: True if verification successful, False otherwise
+        """
+        print(format_text('yellow') + "\nFor safety, please re-type or paste the exact command to proceed:" + reset_format())
+        user_input = input("> ").strip()
+        return user_input == command

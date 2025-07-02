@@ -23,15 +23,15 @@ https://github.com/user-attachments/assets/c2ba7d09-83ea-4d10-a825-92c30f28c0bd
 
 ## 📖 Table of Contents
 
-* [Features](#-features)
-* [Installation](#-installation)
-* [Configuration](#️-configuration)
-* [Usage](#-usage)
-* [Examples](#-examples)
-* [Development Status](#-development-status)
-* [Contributing](#-contributing)
-* [License](#-license)
-* [Contact](#-contact)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Configuration](#️-configuration)
+- [Usage](#-usage)
+- [Examples](#-examples)
+- [Development Status](#-development-status)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Contact](#-contact)
 
 ---
 
@@ -163,6 +163,8 @@ Active model: #[Selected-model]
 Configuration updated!
 ```
 
+---
+
 ## API Key Security
 
 PromptShell uses your system's secure credential storage:
@@ -234,6 +236,7 @@ $ quit
 ```
 
 ### CLI Options
+
 - `--version`: Display the current version of PromptShell
 
 ### Alias Support
@@ -242,7 +245,8 @@ Create shortcuts for frequently used commands:
 
 ```bash
 # Create an alias
-alias add gpm "git push origin main"
+alias add gpm "git push origin main"   # without description
+alias add gpn "git push origin main" --desc "Push changes to orgin/main"   # with description
 
 # Use the alias
 !gpm
@@ -255,6 +259,9 @@ alias list <alias_name>
 
 # Remove an alias
 alias remove gpm
+
+#Remove all alias
+alias clear
 
 # Import/export aliases
 alias import ~/backup/aliases.json
@@ -291,15 +298,14 @@ PromptShell is currently in **alpha stage** of development.
 
 - Ollama models may hallucinate and produce inaccurate responses.
 - Some API providers may have rate limits or require paid plans.
-- User-defined command aliases and shortcuts are not yet supported.
 
 **Roadmap**:
 
 - [x] Local LLM support
 - [x] Interactive configuration setup
-- [ ] Improve command execution safety measures
+- [x] Improve command execution safety measures
+- [x] Add support for user-defined command aliases
 - [ ] Implement speech input support
-- [ ] Add support for user-defined command aliases
 - [ ] Expand model compatibility (e.g., fine-tuned small-scale models)
 
 ---

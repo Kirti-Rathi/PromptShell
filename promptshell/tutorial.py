@@ -184,8 +184,9 @@ Type: cd
 Create shortcuts for frequently used commands using the alias system.
 
 {format_text('yellow', bold=True)}Basic Alias Commands:{reset_format()}
-- alias add <name> \"<command>\" - Create new alias
+- alias add <name> \"<command>\" --desc \"description\"- Create new alias
 - alias list - Show all aliases
+- alias list <name> - Show details about an alias
 - alias remove <name> - Remove an alias
 - alias import/export <file> - Import/export aliases
 

@@ -1,7 +1,7 @@
 """
 Spinner an Progress Bar Utilities for PromptShell
 -------------------------------------------------
-from .spinner_progess_utils import spinner, progress_bar
+from .spinner_progress_utils import spinner, progress_bar
 
 This module provides decorators for adding loading indicators to functions.
 

@@ -81,7 +81,7 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
 """)
                 continue
 
-            if user_input.lower().rstrip().startswith("alias"):
+            if user_input.lower().rstrip().startswith("alias") or user_input.lower().rstrip().startswith("!alias"):
                 result = handle_alias_command(user_input, assistant.alias_manager)
                 print(result)
                 continue
