@@ -261,10 +261,10 @@ class AITerminalAssistant:
                 append_history(user_input, expanded)
                 return self.run_direct_command(expanded)
             if user_input.lower() == "--history":
-                history = get_last_n_history(10)
+                history = get_last_n_history()
                 lines = []
                 lines.append("PromptShell Command History")
-                lines.append("\u2500" * 44)
+                lines.append("\u2500" * 44 if platform.system().lower() != "windows" else "-" * 44)
                 for idx, entry in enumerate(history, 1):
                     ts = entry["timestamp"].replace("T", " ")
                     lines.append(f"[{idx}] {ts}")
@@ -308,6 +308,9 @@ class AITerminalAssistant:
                     command = command[9:]
                 formatted_command = format_text('cyan') + f"Command: {command}" + reset_format()
                 print(formatted_command)
+                self.command_history.append(command)
+                if len(self.command_history) > 10:
+                    self.command_history.pop(0)
                 append_history(user_input, command)
                 if command.startswith("cd "):
                     path = command.split(" ", 1)[1]
@@ -341,6 +344,9 @@ class AITerminalAssistant:
         try:
             formatted_command = format_text('cyan') + f"Direct Command: {command}" + reset_format()
             print(formatted_command)
+            self.command_history.append(command)
+            if len(self.command_history) > 10:
+                self.command_history.pop(0)
             if command.startswith("cd "):
                 path = command.split(" ", 1)[1]
                 os.chdir(os.path.expanduser(path))
