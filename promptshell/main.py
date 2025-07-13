@@ -93,15 +93,5 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
             print(format_text('red', bold=True) + "\nTerminating..." + reset_format())
             break
 
-        if user_input.lower() == "--history":
-          history = assistant.get_history()
-          if not history:
-           print("No command history yet.")
-        else:
-          print("Last 10 commands:")
-          for i, cmd in enumerate(history, 1):
-              print(f"{i}: {cmd}")
-          continue
-
 if __name__ == "__main__":
     main()
