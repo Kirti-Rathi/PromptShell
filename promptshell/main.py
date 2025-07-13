@@ -94,4 +94,5 @@ Type '--help' for assistance and '--config' for settings.{reset_format()}""")
             break
 
 if __name__ == "__main__":
+    
     main()
